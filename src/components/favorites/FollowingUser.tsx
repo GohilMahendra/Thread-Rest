@@ -26,6 +26,7 @@ const FollowingUser = (props: UserItemProps) => {
   }
   return (
     <TouchableOpacity
+      testID={"btn_navigateToUser"}
       onPress={() => props.onPress(item._id)}
       style={styles.container}>
       <View style={styles.rowContainer}>

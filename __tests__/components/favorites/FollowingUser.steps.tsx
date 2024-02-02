@@ -1,0 +1,36 @@
+import React from "react";
+import { fireEvent, render, screen } from "@testing-library/react-native";
+import FollowingUser from "../../../src/components/favorites/FollowingUser";
+import { Provider } from "react-redux";
+import store from "../../../src/redux/store";
+
+describe("Following User component",()=>{
+    beforeEach(()=>{
+        render(
+            <Provider store={store}>
+                <FollowingUser
+             onPress={jest.fn()}
+             user={{
+                _id:"fake_id",
+                email:"fakeEmail@gmail.com",
+                followers:0,
+                following:0,
+                fullname:"fake name",
+                isFollowed:false,
+                username:"mockkname",
+                verified: true,
+                bio:"my bio ...",
+                profile_picture:"profile url"
+             }}
+            />
+            </Provider>
+            
+        )
+    })
+
+    it("I can go to next screen on press navigate to user",()=>{
+        const btn_user = screen.getByTestId("btn_navigateToUser")
+        fireEvent(btn_user,"press")
+    })
+})
+

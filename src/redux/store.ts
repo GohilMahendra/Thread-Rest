@@ -1,20 +1,27 @@
+import React from "react";
 import { useDispatch } from "react-redux";
-import { configureStore } from "@reduxjs/toolkit";
+import { combineReducers, configureStore } from "@reduxjs/toolkit";
 import UserReducer from "./slices/UserSlice";
 import FeedReducer from "./slices/FeedSlice";
 import  SearchReducer  from "./slices/SearchSlice";
 import  ReplyReducer  from "./slices/ReplySlice";
 import  FavoriteReducer  from "./slices/FavoritesSlice";
 import PostSearchReducer from "./slices/PostSearchSlice";
+// const persistConfig = {
+//     key: "root",
+//     storage: AsyncStorage,
+//   };
+
+const RootReducer  = combineReducers({
+    User: UserReducer,
+    Feed: FeedReducer,
+    Search: SearchReducer,
+    Reply: ReplyReducer,
+    Favorite: FavoriteReducer,
+    PostSearch: PostSearchReducer,
+})
 const store = configureStore({
-    reducer:{
-        User: UserReducer,
-        Feed: FeedReducer,
-        Search: SearchReducer,
-        Reply: ReplyReducer,
-        Favorite:FavoriteReducer,
-        PostSearch: PostSearchReducer
-    }
+    reducer:RootReducer,
 })
 
 export type RootState = ReturnType<typeof store.getState>

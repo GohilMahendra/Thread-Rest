@@ -12,6 +12,7 @@ const Loader = () => {
             >
                 <View style={styles.loaderContainer}>
                     <ActivityIndicator
+                        testID={"loader"}
                         animating
                         size={"large"}
                         color={theme.text_color}
