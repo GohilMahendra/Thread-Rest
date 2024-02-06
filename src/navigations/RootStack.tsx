@@ -9,6 +9,7 @@ import { Platform, StatusBar, View } from 'react-native'
 import UseTheme from '../globals/UseTheme'
 import QoutePost from '../screens/profile/QoutePost'
 import { Thread } from '../types/Post'
+import Message from '../screens/message/Message'
 
 export type RootStackType =
     {
@@ -19,6 +20,9 @@ export type RootStackType =
         SplashScreen: undefined,
         QoutePost: {
             Thread: Thread
+        },
+        Messages: {
+            userId: string
         }
     }
 
@@ -50,6 +54,10 @@ const RootStack = () => {
                 <RootStackNavigator.Screen
                     name='UserTab'
                     component={UserTab}
+                />
+                <RootStackNavigator.Screen
+                    name='Messages'
+                    component={Message}
                 />
                 <RootStackNavigator.Group screenOptions={{ presentation: 'modal',
                 contentStyle:{

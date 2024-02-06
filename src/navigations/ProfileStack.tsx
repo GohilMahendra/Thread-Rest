@@ -4,6 +4,7 @@ import Profile from '../screens/profile/Profile'
 import EditProfile from '../screens/profile/EditProfile'
 import Settings from '../screens/profile/Settings'
 import UserProfile from '../screens/profile/UserProfile'
+import Message from '../screens/message/Message'
 
 export type ProfileStacktype =
     {

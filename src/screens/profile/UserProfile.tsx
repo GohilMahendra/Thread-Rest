@@ -4,7 +4,8 @@ import { placeholder_image } from '../../globals/asstes'
 import FontAwesome5Icon from 'react-native-vector-icons/FontAwesome5'
 import FontAwesome from 'react-native-vector-icons/FontAwesome'
 import AntDesign from 'react-native-vector-icons/AntDesign'
-import { RouteProp, useNavigation, StackActions, useRoute } from '@react-navigation/native'
+import Feather from 'react-native-vector-icons/Feather'
+import { RouteProp, useNavigation, StackActions, useRoute, NavigationProp } from '@react-navigation/native'
 import { FlatList } from 'react-native'
 import { Thread } from '../../types/Post'
 import { BottomSheetBackdrop, BottomSheetModal, BottomSheetModalProvider, } from '@gorhom/bottom-sheet'
@@ -22,6 +23,7 @@ import Loader from '../../components/global/Loader'
 import { scaledFont } from '../../globals/utilities'
 import Animated, { useSharedValue, withTiming } from 'react-native-reanimated'
 import { compositeUserProfileRootNavigation } from '../../navigations/Types'
+import { RootStackType } from '../../navigations/RootStack'
 const { height, width } = Dimensions.get("screen")
 const UserProfile = () => {
     const [user, setUser] = useState<User>({
@@ -45,6 +47,7 @@ const UserProfile = () => {
     const detailViewHeight = useRef<number>(0)
     const [lastOffset, setLastOffset] = useState<string | null>(null)
     const navigation = useNavigation<compositeUserProfileRootNavigation>()
+    const MessageNavigation = useNavigation<NavigationProp<RootStackType, "Messages">>()
     const [selectedSection, setSelectedSection] = useState<"Thread" | "Repost">("Thread")
     const [postId, setPostId] = useState("")
     const { theme } = UseTheme()
@@ -246,6 +249,13 @@ const UserProfile = () => {
                         color={theme.text_color}
                     />
                     <View style={{ flexDirection: "row" }}>
+                        <Feather
+                            onPress={() => MessageNavigation.navigate("Messages", { userId: userId })}
+                            name='message-square'
+                            size={scaledFont(25)}
+                            color={theme.text_color}
+                            style={{ marginRight: 10 }}
+                        />
                         <AntDesign
                             name='instagram'
                             size={scaledFont(25)}
@@ -279,7 +289,7 @@ const UserProfile = () => {
                         />
                     </View>
                     {renderBioWithPressableHashtags(user.bio || "")}
-                    <Text style={{ color: theme.secondary_text_color ,fontSize: scaledFont(12)}}>{user.followers} Followers</Text>
+                    <Text style={{ color: theme.secondary_text_color, fontSize: scaledFont(12) }}>{user.followers} Followers</Text>
                     <TouchableOpacity
                         onPress={() => toggleFollow()}
                         style={[styles.btnFollow, {
@@ -328,7 +338,7 @@ const UserProfile = () => {
         return (
             <View style={styles.emptyContainer}>
                 <Text style={[styles.txtEmpty,
-                {color: theme.secondary_text_color}]}>No posts created by {user.username}</Text>
+                { color: theme.secondary_text_color }]}>No posts created by {user.username}</Text>
             </View>
         )
     }

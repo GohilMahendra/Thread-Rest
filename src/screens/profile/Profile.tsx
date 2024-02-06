@@ -4,6 +4,7 @@ import { placeholder_image } from '../../globals/asstes'
 import { useSelector } from 'react-redux'
 import { RootState, useAppDispatch } from '../../redux/store'
 import AntDesign from 'react-native-vector-icons/AntDesign'
+import Feather from 'react-native-vector-icons/Feather'
 import { NavigationProp, useNavigation } from '@react-navigation/native'
 import { ProfileStacktype } from '../../navigations/ProfileStack'
 import { FlatList } from 'react-native'
@@ -21,6 +22,7 @@ import Animated, {
   withSpring,
   withTiming
 } from 'react-native-reanimated';
+import { RootStackType } from '../../navigations/RootStack'
 const { height } = Dimensions.get("screen")
 const Profile = () => {
   const user = useSelector((state: RootState) => state.User.user)
@@ -54,10 +56,10 @@ const Profile = () => {
 
   }
   const onNavigate = (userId: string) => {
-    if(userId != user._id)
-    navigation.navigate("UserProfile", {
-      userId: userId
-    })
+    if (userId != user._id)
+      navigation.navigate("UserProfile", {
+        userId: userId
+      })
   }
   const dispatch = useAppDispatch()
   const renderPosts = (item: Thread, index: number) => {
@@ -65,12 +67,12 @@ const Profile = () => {
       item.Repost && item.isRepost ?
         <ProfileRepost
           post={item}
-          onPressNavigate = {(userId)=> onNavigate(userId)}
+          onPressNavigate={(userId) => onNavigate(userId)}
           onPressThreeDots={(postId: string) => handleThreedotPress(postId)}
         /> :
         <ProfilePost
           post={item}
-          onPressNavigate = {(userId)=> onNavigate(userId)}
+          onPressNavigate={(userId) => onNavigate(userId)}
           onPressThreeDots={(postId: string) => handleThreedotPress(postId)}
         />
     )
@@ -86,6 +88,12 @@ const Profile = () => {
     return (
       <View>
         <View style={styles.headerContainer}>
+          <Feather
+            name='message-square'
+            size={scaledFont(25)}
+            color={theme.text_color}
+            style={{ marginRight: 10 }}
+          />
           <AntDesign
             //onPress={() => navigation.navigate("Settings")}
             name='instagram'
@@ -150,14 +158,14 @@ const Profile = () => {
       </View>
     )
   }
-  
+
   const renderEmptyComponent = () => {
-      return (
-          <View style={styles.emptyContainer}>
-              <Text style={[styles.txtEmpty,
-              {color: theme.secondary_text_color}]}>No Posts Created By {user.username}</Text>
-          </View>
-      )
+    return (
+      <View style={styles.emptyContainer}>
+        <Text style={[styles.txtEmpty,
+        { color: theme.secondary_text_color }]}>No Posts Created By {user.username}</Text>
+      </View>
+    )
   }
 
   useEffect(() => {
@@ -318,7 +326,7 @@ const styles = StyleSheet.create({
   },
   selectionSticky:
   {
-    marginTop: scaledFont(20),
+    marginTop: scaledFont(50),
   },
   modalContainer:
   {
@@ -368,6 +376,6 @@ const styles = StyleSheet.create({
   },
   txtEmpty:
   {
-      fontSize: scaledFont(15),
+    fontSize: scaledFont(15),
   }
 })

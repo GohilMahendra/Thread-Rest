@@ -32,6 +32,7 @@ export const SignInAction = createAsyncThunk(
             return user
         }
         catch (err) {
+            console.log(err)
             return rejectWithValue(JSON.stringify(err))
         }
     })
