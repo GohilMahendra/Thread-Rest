@@ -3,7 +3,7 @@ import { Dimensions, SafeAreaView, StyleSheet, Text, TextInput, View } from "rea
 import FontAwesome from "react-native-vector-icons/FontAwesome";
 import { getToken, scaledFont } from "../../globals/utilities";
 import UseTheme from "../../globals/UseTheme";
-import { NavigationProp, RouteProp, useNavigation } from "@react-navigation/native";
+import { NavigationProp, RouteProp, useNavigation, useRoute } from "@react-navigation/native";
 import { TouchableOpacity } from "react-native";
 import io from "socket.io-client";
 import { twitter_blue } from "../../globals/Colors";
@@ -14,8 +14,8 @@ const { width } = Dimensions.get("screen")
 const Message = () => {
     const { theme } = UseTheme()
     const navigation = useNavigation<NavigationProp<RootStackType, "Messages">>()
-    const route = useNavigation<RouteProp<RootStackType, "Messages">>()
-    const userId = route.params?.userId
+    const route = useRoute<RouteProp<RootStackType, "Messages">>()
+    const userId = route.params.userId
     const [messages, setMessages] = useState<string[]>([])
     const [userMessage, setUserMessage] = useState("")
     const socketRef = useRef<any>(null);
@@ -30,8 +30,9 @@ const Message = () => {
         // Handle socket events here
         // For example, you can listen for a custom event named 'newMessage'
         socket.on('newMessage', (msg) => {
-            console.log(msg)
-            // setMessages(prevMessages => [...prevMessages, msg]);
+            
+            if(msg.content)
+            setMessages(prevMessages => [...prevMessages, msg.content]);
             // Update your romponent state or perform any other actions
         });
 
@@ -55,8 +56,6 @@ const Message = () => {
                     }
                 }
             );
-
-            console.log(token)
 
         }
         catch (err) {
