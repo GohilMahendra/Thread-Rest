@@ -10,17 +10,17 @@ import { twitter_blue } from "../../globals/Colors";
 import { RootStackType } from "../../navigations/RootStack";
 import axios from "axios";
 import { BASE_URL } from "../../globals/constants";
+import { Image } from "react-native-elements";
 const { width } = Dimensions.get("screen")
 const Message = () => {
     const { theme } = UseTheme()
     const navigation = useNavigation<NavigationProp<RootStackType, "Messages">>()
     const route = useRoute<RouteProp<RootStackType, "Messages">>()
-    const userId = route.params.userId
+    const user = route.params.user
     const [messages, setMessages] = useState<string[]>([])
     const [userMessage, setUserMessage] = useState("")
     const socketRef = useRef<any>(null);
-    useEffect(() => {
-        // Replace 'your_backend_url' with the actual URL of your Socket.IO server
+    const initliseSocket = async () => {
         const socket = io("http://localhost:3000");
 
         socket.on('connect', () => {
@@ -30,15 +30,44 @@ const Message = () => {
         // Handle socket events here
         // For example, you can listen for a custom event named 'newMessage'
         socket.on('newMessage', (msg) => {
-            
-            if(msg.content)
-            setMessages(prevMessages => [...prevMessages, msg.content]);
+
+            if (msg.content)
+                setMessages(prevMessages => [...prevMessages, msg.content]);
             // Update your romponent state or perform any other actions
         });
+    }
+    const getMessages = async () => {
+        try {
+            const token = await getToken()
+            const response = await axios.get(`${BASE_URL}messages/${user._id}`,
+                {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'token': token
+                    }
+                }
+            )
+            const data: any[] = response.data?.data
+            if (data) {
+                let msgs: string[] = []
+                data.forEach((msg: any, index: number) => {
+                    if (msg.content) {
+                        msgs.push(msg.content)
+                    }
+                });
 
+                setMessages(msgs)
+            }
+        }
+        catch (err) {
+            console.log(err)
+        }
+    }
+    useEffect(() => {
+        getMessages()
+        initliseSocket()
         return () => {
-            // Disconnect the socket when the component is unmounted
-            socket.disconnect();
+            socketRef.current.disconnect();
             console.log('Disconnected from Socket.IO server');
         };
     }, []);
@@ -47,7 +76,7 @@ const Message = () => {
         try {
             const token = await getToken()
             const response = await axios.post(
-                `${BASE_URL}messages/${userId}`,
+                `${BASE_URL}messages/${user._id}`,
                 { content: text },
                 {
                     headers: {
@@ -71,6 +100,25 @@ const Message = () => {
                     size={scaledFont(25)}
                     color={theme.text_color}
                 />
+                <View />
+                <View style={{
+                    marginLeft: 20,
+                    flexDirection: 'row',
+                    alignItems: "center"
+                }}>
+                    <Image
+                        source={{ uri: user.profile_picture }}
+                        style={{
+                            height: 30,
+                            marginRight: 20,
+                            width: 30,
+                            borderRadius: 30
+                        }}
+                    />
+                    <Text style={{
+                        fontSize:15
+                    }}>{user.fullname}</Text>
+                </View>
                 <View />
             </View>
             {
@@ -141,7 +189,6 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         padding: 20,
         paddingVertical: 10,
-        justifyContent: "space-between",
         alignItems: "center"
     }
 })

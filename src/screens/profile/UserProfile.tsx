@@ -250,7 +250,7 @@ const UserProfile = () => {
                     />
                     <View style={{ flexDirection: "row" }}>
                         <Feather
-                            onPress={() => MessageNavigation.navigate("Messages", { userId: userId })}
+                            onPress={() => MessageNavigation.navigate("Messages", { user: user })}
                             name='message-square'
                             size={scaledFont(25)}
                             color={theme.text_color}

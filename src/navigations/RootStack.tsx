@@ -10,6 +10,7 @@ import UseTheme from '../globals/UseTheme'
 import QoutePost from '../screens/profile/QoutePost'
 import { Thread } from '../types/Post'
 import Message from '../screens/message/Message'
+import { User } from '../types/User'
 
 export type RootStackType =
     {
@@ -22,7 +23,7 @@ export type RootStackType =
             Thread: Thread
         },
         Messages: {
-            userId: string
+            user: User
         }
     }
 
