@@ -10,15 +10,29 @@ const messageSchema = new Schema({
         ref: "User",
         required: true
     },
-    reciever:{
+    channel:{
         type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
+        ref: "Channel",
         required: true
     },
+    media: [{
+        media_type: {
+            type: String,
+            required: true
+        },
+        media_url: {
+            type: String,
+            required: true
+        },
+        thumbnail: {
+            type: String,
+            default: null
+        }
+    }],
     content: {
         type: String,
     }
 }, { timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } })
 
-const Message = mongoose.model("Message",messageSchema)
+const Message = mongoose.model("Message", messageSchema)
 export default Message 

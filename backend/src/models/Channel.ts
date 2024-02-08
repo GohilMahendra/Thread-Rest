@@ -1,14 +1,18 @@
 import mongoose from "mongoose";
 
 const channelSchema = new mongoose.Schema({
-    lastMessage:{
+    lastMessage: {
         type: mongoose.Schema.Types.ObjectId,
-        ref:"Message"
+        ref: "Message"
     },
     members:[{
         type: mongoose.Schema.Types.ObjectId,
         ref:"User"
-    }]
+    }],
+    unread_message:{
+        type: Number,
+        default: 0
+    }
 
 },{ timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }})
 

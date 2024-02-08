@@ -8,6 +8,7 @@ import FollowRoutes from "./src/routes/FollowRoutes"
 import MessageRoutes from "./src/routes/MessageRoutes"
 import dotenv from 'dotenv';
 import { Server } from "socket.io";
+import { createClient  } from "redis";
 import http from "http";
 dotenv.config()
 const app = express()
@@ -33,6 +34,8 @@ export const io = new Server(server, {
   }
 });
 
+
+
 io.on('connection', (socket) => {
     console.log('User connected:', socket.id);
   
@@ -45,6 +48,11 @@ io.on('connection', (socket) => {
     socket.on('disconnect', () => {
       console.log('User disconnected:', socket.id);
     });
+
+    socket.on("joinChannel",(channelId)=>{
+      console.log("jpined in this convessatio channel")
+      socket.join(channelId);
+    })
   });
 
 server.listen(port,()=>{

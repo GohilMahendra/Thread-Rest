@@ -9,8 +9,9 @@ import { Platform, StatusBar, View } from 'react-native'
 import UseTheme from '../globals/UseTheme'
 import QoutePost from '../screens/profile/QoutePost'
 import { Thread } from '../types/Post'
-import Message from '../screens/message/Message'
+import Message from '../screens/message/Messages'
 import { User } from '../types/User'
+import Conversations from '../screens/message/Conversations'
 
 export type RootStackType =
     {
@@ -23,20 +24,22 @@ export type RootStackType =
             Thread: Thread
         },
         Messages: {
-            user: User
-        }
+            user: User,
+            channel?: string
+        },
+        Conversations: undefined
     }
 
 
 const RootStackNavigator = createNativeStackNavigator<RootStackType>()
 
 const RootStack = () => {
-    const {theme} = UseTheme()
+    const { theme } = UseTheme()
     return (
         <NavigationContainer>
             <StatusBar
-            backgroundColor={theme.background_color}
-            barStyle={Platform.OS=="ios"?"dark-content":"light-content"}
+                backgroundColor={theme.background_color}
+                barStyle={Platform.OS == "ios" ? "dark-content" : "light-content"}
             />
             <RootStackNavigator.Navigator
                 screenOptions={{
@@ -60,13 +63,18 @@ const RootStack = () => {
                     name='Messages'
                     component={Message}
                 />
-                <RootStackNavigator.Group screenOptions={{ presentation: 'modal',
-                contentStyle:{
-                    marginTop:20,
-                    borderTopRightRadius:20,
-                    borderTopLeftRadius:20
-                }
-            }}>
+                <RootStackNavigator.Screen
+                    name='Conversations'
+                    component={Conversations}
+                />
+                <RootStackNavigator.Group screenOptions={{
+                    presentation: 'modal',
+                    contentStyle: {
+                        marginTop: 20,
+                        borderTopRightRadius: 20,
+                        borderTopLeftRadius: 20
+                    }
+                }}>
                     <RootStackNavigator.Screen name="CreatePost" component={CreatePost} />
                     <RootStackNavigator.Screen name="QoutePost" component={QoutePost} />
                 </RootStackNavigator.Group>

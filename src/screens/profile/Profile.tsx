@@ -32,6 +32,7 @@ const Profile = () => {
   const lastOffset = useSelector((state: RootState) => state.User.lastOffset)
   const morePostsLoading = useSelector((state: RootState) => state.User.morePostsLoading)
   const navigation = useNavigation<NavigationProp<ProfileStacktype, "Profile">>()
+  const rootNavigation =  useNavigation<NavigationProp<RootStackType, "Conversations">>()
   const [selectedSection, setSelectedSection] = useState<"Thread" | "Repost">("Thread")
   const threeDotPressModalRef = useRef<BottomSheetModal>(null)
   const snapPoints = useMemo(() => ['30%'], []);
@@ -89,6 +90,7 @@ const Profile = () => {
       <View>
         <View style={styles.headerContainer}>
           <Feather
+            onPress={()=>rootNavigation.navigate("Conversations")}
             name='message-square'
             size={scaledFont(25)}
             color={theme.text_color}
