@@ -6,7 +6,7 @@ interface DecodedToken {
     iat: number;
 }
 
-const verifyToken = (token: string) => {
+export const verifyToken = (token: string) => {
     try {
         const decodedToken:DecodedToken = jwt.verify(token, process.env.TOKEN_SECRET || "") as DecodedToken
         return { success: true, userId: decodedToken.userId };

@@ -91,7 +91,7 @@ const Profile = () => {
         <View style={styles.headerContainer}>
           <Feather
             onPress={()=>rootNavigation.navigate("Conversations")}
-            name='message-square'
+            name='message-circle'
             size={scaledFont(25)}
             color={theme.text_color}
             style={{ marginRight: 10 }}

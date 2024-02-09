@@ -1,6 +1,6 @@
 import axios from "axios";
 import { useEffect, useState } from "react"
-import { View, Text, SafeAreaView } from "react-native";
+import { View, Text, SafeAreaView, FlatList, RefreshControl, StyleSheet } from "react-native";
 import { getToken, scaledFont, timeDifference } from "../../globals/utilities";
 import { BASE_URL } from "../../globals/constants";
 import { Channel } from "../../types/Messages";
@@ -13,13 +13,17 @@ import { RootStackType } from "../../navigations/RootStack";
 import FontAwesome from "react-native-vector-icons/FontAwesome";
 import UseTheme from "../../globals/UseTheme";
 import { Badge } from "react-native-elements";
+import ConversationItem from "../../components/messages/ConversationItem";
+import { User } from "../../types/User";
 const Conversations = () => {
     const [channels, setChannels] = useState<Channel[]>([])
+    const [loading, setloading] = useState<boolean>(false)
     const userId = useSelector((state: RootState) => state.User.user._id)
     const navigation = useNavigation<NavigationProp<RootStackType, "Conversations">>()
     const { theme } = UseTheme()
     const getChannels = async () => {
         try {
+            setloading(true)
             const token = await getToken()
             const response = await axios.get(`${BASE_URL}messages`,
                 {
@@ -45,104 +49,83 @@ const Conversations = () => {
                 })
                 console.log(conversations)
                 setChannels(conversations)
+                setloading(false)
             }
         }
         catch (err) {
             console.log(err)
+            setloading(false)
         }
+    }
+
+    const onNavigateMessage = (user: User,channelId?:string) =>
+    {
+        navigation.navigate("Messages",{
+            user: user,
+            channel: channelId
+        })
+    }
+
+    const renderConversations = (item: Channel, index: number) => {
+        return (
+           <ConversationItem
+           onPressChannel={(user:User,channelId?:string)=>onNavigateMessage(user,channelId)}
+           Conversation={item}
+           key={item._id}
+           />
+        )
     }
     useEffect(() => {
         getChannels()
     }, [])
     return (
         <SafeAreaView style={{
-            flex: 1
+            flex: 1,
+            backgroundColor: theme.background_color
         }}>
-            <View style={{
-                flex: 1
-            }}>
-                <View style={{
-                    flexDirection: "row",
-                    padding: 20,
-
-                }}>
+            <View style={styles.container}>
+                <View style={styles.header}>
                     <FontAwesome
                         onPress={() => navigation.goBack()}
                         name='angle-left'
                         size={scaledFont(25)}
                         color={theme.text_color}
                     />
+                    <Text style={{
+                        fontWeight:"bold",
+                        color: theme.text_color,
+                        fontSize: scaledFont(15)
+                    }}>Messages</Text>
                     <View />
                 </View>
 
-                {
-                    channels.map((item) => {
-                        return (
-                            <TouchableOpacity
-                                onPress={() => navigation.navigate("Messages", {
-                                    user: item.member,
-                                    channel: item._id
-                                })}
-                                key={item._id}>
-                                <View style={{
-                                    flexDirection: "row",
-                                    alignItems: "center",
-                                    padding: 10
-                                }}>
-                                    <Image
-                                        source={{ uri: item.member.profile_picture }}
-                                        style={{
-                                            height: scaledFont(50),
-                                            marginRight: 10,
-                                            width: scaledFont(50),
-                                            borderRadius: scaledFont(50)
-                                        }}
-                                    />
-                                    <View style={{
-                                        width: "80%",
-                                        borderBottomWidth: 0.5,
-                                        paddingBottom: 5
-                                    }}>
-                                        <View style={{
-                                            flexDirection: "row",
-                                            justifyContent: "space-between",
-                                            alignItems: "flex-start"
-                                        }}>
-                                            <Text style={{
-                                                fontSize: 18,
-                                                fontWeight: 'bold'
-                                            }}>{item.member.fullname}</Text>
-                                            <Text>{timeDifference(item.updated_at)}</Text>
-                                        </View>
-                                        <View style={{
-                                            flexDirection: "row",
-                                            justifyContent: "space-between",
-
-                                        }}>
-                                            <Text
-                                                numberOfLines={2}
-                                                style={{
-                                                    fontSize: 12,
-                                                    maxWidth: "80%"
-                                                }}>{item?.lastMessage?.content}</Text>
-                                            {
-                                                (item.unread_messages && item.unread_messages > 0)
-                                                &&
-                                                <Badge
-                                                    value={10}
-                                                />
-                                            }
-                                        </View>
-                                    </View>
-
-                                </View>
-
-                            </TouchableOpacity>
-                        )
-                    })
-                }
+                <FlatList
+                    refreshControl={<RefreshControl
+                        tintColor={theme.text_color}
+                        refreshing={loading}
+                        onRefresh={() => getChannels()}
+                    />}
+                    data={channels}
+                    keyExtractor={item => item._id}
+                    renderItem={({ item, index }) => renderConversations(item, index)}
+                />
             </View>
         </SafeAreaView>
     )
 }
 export default Conversations
+
+const styles = StyleSheet.create({
+    container:
+    {
+        flex: 1
+    },
+    header:
+    {
+        flexDirection: "row",
+        padding: 20,
+        justifyContent:"space-between",
+        alignItems:"center"
+    },
+
+})

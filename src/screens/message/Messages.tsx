@@ -1,13 +1,27 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Dimensions,ScrollView, SafeAreaView, StyleSheet, Text, TextInput, View } from "react-native";
+import {
+    Dimensions,
+    SafeAreaView,
+    StyleSheet,
+    Text,
+    TextInput,
+    View,
+    BackHandler,
+    FlatList
+} from "react-native";
 import FontAwesome from "react-native-vector-icons/FontAwesome";
-import MaterialIcons from "react-native-vector-icons/MaterialIcons";
+import Fontisto from "react-native-vector-icons/Fontisto";
 import { getToken, scaledFont } from "../../globals/utilities";
 import UseTheme from "../../globals/UseTheme";
-import { NavigationProp, RouteProp, useNavigation, useRoute } from "@react-navigation/native";
+import {
+    NavigationProp,
+    RouteProp,
+    useNavigation,
+    useRoute
+} from "@react-navigation/native";
 import { TouchableOpacity } from "react-native";
-import io from "socket.io-client";
-import { twitter_blue } from "../../globals/Colors";
+import io, { Socket } from "socket.io-client";
+import { white_silver } from "../../globals/Colors";
 import { RootStackType } from "../../navigations/RootStack";
 import axios from "axios";
 import { BASE_URL } from "../../globals/constants";
@@ -15,7 +29,9 @@ import { Image } from "react-native-elements";
 import { launchImageLibrary } from "react-native-image-picker";
 import { UploadMedia } from "../../types/Post";
 import { Message } from "../../types/Messages";
-import GridViewer from "../../components/feed/GridViewer";
+import { useSelector } from "react-redux";
+import { RootState } from "../../redux/store";
+import MessageItem from "../../components/messages/MessageItem";
 
 const { width } = Dimensions.get("screen")
 const Messages = () => {
@@ -23,12 +39,23 @@ const Messages = () => {
     const navigation = useNavigation<NavigationProp<RootStackType, "Messages">>()
     const route = useRoute<RouteProp<RootStackType, "Messages">>()
     const user = route.params.user
+    const currentUserId = useSelector((state: RootState) => state.User.user._id)
     const routeChannel = route.params.channel || null
+    const [lastOffset,setLastOffset] = useState<string | null>(null)
     const [media, setMedia] = useState<UploadMedia[]>([])
     const [messages, setMessages] = useState<Message[]>([])
     const [userMessage, setUserMessage] = useState("")
-    const socketRef = useRef<any>(null);
+    const socketRef = useRef<Socket | null>(null);
     const [channel, setChannel] = useState<string | null>(routeChannel)
+    const listRef = useRef<FlatList | null>(null)
+    const renderMessage = (message: Message, index: number) => {
+        return (
+            <MessageItem
+                message={message}
+            />
+        )
+    }
+
     const initliseSocket = async () => {
         const token = await getToken()
         const socket = io('http://localhost:3000', {
@@ -41,11 +68,12 @@ const Messages = () => {
             console.log('Connected to Socket.IO server');
         })
         socketRef.current = socket;
-        socket.emit("joinChannel",channel)
+        socket.emit("joinChannel", channel)
 
-        socket.on("newMessage",(message)=>{
+        socket.on("newMessage", (message) => {
             console.log(JSON.stringify(message))
-            setMessages(prevMessage=>[...prevMessage,message])
+            setMessages(prevMessage => [...prevMessage, message])
+            listRef.current?.scrollToEnd({ animated: true })
         })
     }
     const openImagePicker = async () => {
@@ -71,11 +99,12 @@ const Messages = () => {
     }
     const getMessages = async () => {
         try {
-            if(!channel)
-            return
+            if (!channel)
+                return
 
             const token = await getToken()
-            const response = await axios.get(`${BASE_URL}messages/${channel}`,
+            let query =`${BASE_URL}messages/${channel}?pageSize=5`;
+            const response = await axios.get(query,
                 {
                     headers: {
                         'Content-Type': 'application/json',
@@ -86,27 +115,76 @@ const Messages = () => {
             const data: Message[] = response.data?.data
             if (data) {
                 setMessages(data)
+                listRef.current?.scrollToEnd()
             }
         }
         catch (err) {
             console.log(err)
         }
     }
+
+    const getMoreMessages = async () => {
+        try {
+            if (!channel || !lastOffset)
+                return
+
+            const token = await getToken()
+            let query =`${BASE_URL}messages/${channel}?pageSize=5`;
+
+            if (lastOffset) {
+                query += `&lastOffset=${lastOffset}`;
+            }
+            console.log(query)
+            const response = await axios.get(query,
+                {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'token': token
+                    }
+                }
+            )
+            const data: Message[] = response.data?.data
+            if (data) {
+                setMessages(data)
+                if(response.data?.meta)
+                setLastOffset(response.data.meta.lastOffset)
+                listRef.current?.scrollToEnd()
+            }
+        }
+        catch (err) {
+            console.log(err)
+        }
+    }
+
+    const onBackPress = async () => {
+        socketRef.current?.disconnect()
+        navigation.goBack()
+    }
+
+    const removeMedia = async (index: number) => {
+        let mediaArr = [...media]
+        mediaArr.splice(index, 1)
+        setMedia(mediaArr)
+    }
     useEffect(() => {
+        const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+            socketRef.current?.disconnect()
+            return true;
+        });
+
         getMessages()
         initliseSocket()
         return () => {
-            socketRef.current.disconnect();
-            console.log('Disconnected from Socket.IO server');
+            socketRef.current?.disconnect()
+            backHandler.remove();
         };
     }, []);
 
-    const sendMessage = async (text: string) => {
+    const sendMessage = async () => {
         try {
             const token = await getToken()
-            console.log(token)
             let formdata = new FormData()
-            formdata.append("content", text)
+            formdata.append("content", userMessage)
             if (channel) {
                 formdata.append("channelId", channel)
             }
@@ -127,11 +205,10 @@ const Messages = () => {
                     }
                 }
             );
-        
+
             const data = response.data
 
-            if(data?.channel)
-            {
+            if (data?.channel) {
                 setChannel(data?.channel._id)
             }
             setMedia([])
@@ -145,137 +222,151 @@ const Messages = () => {
         }
     }
     return (
-        <SafeAreaView style={{ flex: 1 }}>
+        <SafeAreaView style={{ flex: 1, backgroundColor: theme.background_color }}>
             <View style={styles.headerContainer}>
                 <FontAwesome
-                    onPress={() => navigation.goBack()}
+                    onPress={() => onBackPress()}
                     name='angle-left'
                     size={scaledFont(25)}
                     color={theme.text_color}
                 />
-                <View />
-                <View style={{
-                    marginLeft: 20,
-                    flexDirection: 'row',
-                    alignItems: "center"
-                }}>
+                <View style={styles.headerProfileContainer}>
                     <Image
                         source={{ uri: user.profile_picture }}
-                        style={{
-                            height: 30,
-                            marginRight: 20,
-                            width: 30,
-                            borderRadius: 30
-                        }}
+                        style={styles.imgProfileUser}
                     />
                     <Text style={{
                         fontSize: 15,
-                        fontWeight:"bold"
+                        color: theme.text_color,
+                        fontWeight: "bold"
                     }}>{user.fullname}</Text>
                 </View>
                 <View />
             </View>
-            <ScrollView contentContainerStyle={{
-                paddingBottom:200
-            }}>
-            {
-                messages.map((message, index) => {
-                    return (
-                        <View
-                            style={{
-                                maxWidth: width * 60 / 100,
-                                justifyContent: 'center',
-                                alignItems: "center",
-                                padding: 20,
-                                backgroundColor: twitter_blue,
-                                margin: 10,
-                                borderRadius: 20
-                            }}
-                            id={index.toString()}>
-                            <Text>{message?.content}</Text>
-                            {
-                                message?.media &&
-                                <GridViewer
-                                media={message.media}
-                                />
-                            }
-                        </View>
-
-                    )
-                })
-            }
-
-            </ScrollView>
+            <FlatList
+                ref={ref => listRef.current = ref}
+                contentContainerStyle={{
+                    paddingBottom: 100
+                }}
+                style={{
+                    flex: 1
+                }}
+                onEndReached={()=>getMoreMessages()}
+                data={messages}
+                keyExtractor={item => item._id}
+                renderItem={({ item, index }) => renderMessage(item, index)}
+            />
             <View style={{
                 position: "absolute",
-                width: "100%",
-                bottom: 20
+                bottom: scaledFont(15),
+                width: "90%",
+                backgroundColor: theme.secondary_background_color,
+                elevation: 5,
+                borderRadius: 20,
+                alignSelf: 'center',
+
             }}>
                 <View style={{
-                    flexDirection: "row",
-                    marginHorizontal: 20
+                    flexDirection: "row"
                 }}>
-                    {media.map((mediaObj, index) => {
-                        return (
-                            <View style={{
-                                marginRight: 10
-                            }}>
-                                <Image
-                                    source={{ uri: mediaObj.uri }}
-                                    style={{
-                                        height: 40,
-                                        width: 40,
-                                        borderRadius: 15
-                                    }}
-                                />
-                            </View>
-                        )
-                    })}
+                    {
+                        media.map((file, index) => {
+                            return (
+                                <View style={{
+                                    margin: 5
+                                }}>
+                                    <Image
+                                        source={{ uri: file.uri }}
+                                        style={{
+                                            height: scaledFont(50),
+                                            width: scaledFont(50),
+                                            borderRadius: scaledFont(15)
+                                        }}
+                                    />
+                                    <Fontisto
+                                        onPress={() => removeMedia(index)}
+                                        style={{
+                                            position: 'absolute',
+                                            right: scaledFont(-5),
+                                            top: scaledFont(-5)
+                                        }}
+                                        name="close"
+                                        color={theme.text_color}
+                                        size={scaledFont(20)}
+                                    />
+
+                                </View>
+                            )
+                        })
+                    }
+
                 </View>
                 <View style={{
-                    paddingVertical: 5,
-                    backgroundColor:"#fff",
-                    elevation:10,
-                    paddingHorizontal: 20,
-                    flexDirection: 'row',
+                    flexDirection: "row",
+                    borderWidth: 0.2,
+                    padding: 10,
+                    borderColor: theme.text_color,
                     alignItems: "center",
+                    borderRadius: 20,
                     justifyContent: "space-between",
                 }}>
-                    <MaterialIcons
-                        onPress={() => openImagePicker()}
-                        name="add"
-                        size={30}
-                        color={"black"}
-                    />
-                    <TextInput
-                        value={userMessage}
-                        onChangeText={(text) => setUserMessage(text)}
-                        placeholder="Type something here.."
-                        placeholderTextColor={"grey"}
-                        multiline
-                        style={{
-                            width: "70%",
-                            padding: 10,
-                            paddingVertical: 20,
-                            fontSize: 15,
-                            borderRadius: 10
-                        }}
-                    />
-
                     <TouchableOpacity
-                        onPress={() => sendMessage(userMessage)}
+                        onPress={() => openImagePicker()}
+                        style={{
+                            borderRightWidth: 0.3,
+                            borderColor: theme.text_color,
+                            justifyContent: "center",
+                            alignItems: "center",
+                            padding: 10,
+                            alignSelf: "flex-end"
+                        }}>
+                        <Fontisto
+                            name="link"
+                            color={theme.text_color}
+                            size={scaledFont(20)}
+                        />
+                    </TouchableOpacity>
+                    <View style={{
+                        flex: 4,
+                        justifyContent: "flex-start",
+                        //alignItems:'center',
+                        padding: 5
+                    }}>
+                        <TextInput
+                            value={userMessage}
+                            onChangeText={(text) => setUserMessage(text)}
+                            numberOfLines={4}
+                            multiline
+                            style={{
+                                fontSize: scaledFont(12),
+                                color: theme.text_color
+                            }}
+                            placeholderTextColor={theme.text_color}
+                            placeholder="send a message ..."
+                        />
+                    </View>
+                    <TouchableOpacity
+                        onPress={() => sendMessage()}
                         style={{
                             padding: 10,
+                            maxHeight: scaledFont(50),
+                            borderRadius: scaledFont(12),
+                            alignSelf: "flex-end",
                             justifyContent: 'center',
-                            alignItems: "center",
-                            backgroundColor: "blue",
-                            borderRadius: 10
-                        }}>
-                        <Text style={{
-                            color: "#fff"
-                        }}>Send</Text>
+                            alignItems: 'center',
+                            backgroundColor: theme.primary_color
+                        }}
+                    >
+                        <FontAwesome
+                            name="send"
+                            color={white_silver}
+                            size={scaledFont(20)}
+                        />
+
                     </TouchableOpacity>
+
                 </View>
+
             </View>
         </SafeAreaView>
     )
@@ -288,5 +379,35 @@ const styles = StyleSheet.create({
         padding: 20,
         paddingVertical: 10,
         alignItems: "center"
+    },
+    headerProfileContainer:
+    {
+        marginLeft: scaledFont(20),
+        flexDirection: 'row',
+        alignItems: "center",
+        justifyContent: "center"
+    },
+    imgProfileUser:
+    {
+        height: scaledFont(30),
+        marginRight: scaledFont(20),
+        width: scaledFont(30),
+        borderRadius: scaledFont(30)
+    },
+    createMessageContainer:
+    {
+        width: "100%",
+    },
+    selectedMediaContainer:
+    {
+        flexDirection: "row",
+        marginHorizontal: 20
+    },
+    selectedThumb:
+    {
+        height: scaledFont(40),
+        width: scaledFont(40),
+        borderRadius: scaledFont(15)
     }
+
 })

@@ -61,8 +61,7 @@ const sendMessage = async (req: CustomRequest, res: Response) => {
         const messageRespnse = await message.save()
         const messageTochannel = message
 
-        if(messageTochannel.media && messageTochannel.media.length > 0)
-        {
+        if (messageTochannel.media && messageTochannel.media.length > 0) {
             for (const mediaFile of messageTochannel.media) {
                 mediaFile.media_url = await getSignedUrl(mediaFile.media_url);
                 if (mediaFile.thumbnail) {
@@ -92,13 +91,22 @@ const getMessages = async (req: CustomRequest, res: Response) => {
     try {
         const userId = req.userId
         const channelId = req.params.channelId
-        const conversations = await Message.find({
+        const lastOffset = req.query.lastOffset as string
+        const pageSizeParam = req.query.pageSize as string;
+        const pageSize = parseInt(pageSizeParam, 10) || 10;
+        console.log(pageSize,lastOffset)
+        let quary: any = {
             channel: new mongoose.Types.ObjectId(channelId),
-        }).sort({ createdAt: 1 });
-        
-        await Promise.all(conversations.map(async(message)=>{
-            if(message.media && message.media.length > 0)
-            {
+        }
+        if (lastOffset) {
+            quary._id = { $lt: new mongoose.Types.ObjectId(lastOffset) }
+        }
+        const conversations = await Message.find(quary)
+            .sort({ created_at: -1, _id: 1 })
+            .limit(pageSize);
+
+        await Promise.all(conversations.map(async (message) => {
+            if (message.media && message.media.length > 0) {
                 for (const mediaFile of message.media) {
                     mediaFile.media_url = await getSignedUrl(mediaFile.media_url);
                     if (mediaFile.thumbnail) {
@@ -109,7 +117,12 @@ const getMessages = async (req: CustomRequest, res: Response) => {
         }))
 
         return res.status(200).json({
-            data: conversations
+            data: conversations,
+            meta: {
+                pageSize: pageSize,
+                lastOffset: conversations.length >= pageSize ?
+                    conversations[conversations.length - 1]._id : null
+            }
         })
     }
     catch (err) {
@@ -127,9 +140,9 @@ const getChannels = async (req: CustomRequest, res: Response) => {
         }).populate<{ members: UserDocument[] }>({
             path: 'members',
             model: 'User'
-        }).populate<{message:MessageDocument}>({
+        }).populate<{ message: MessageDocument }>({
             path: "lastMessage",
-            model:"Message"
+            model: "Message"
         })
 
         await Promise.all(channels.map(async (channel) => {
@@ -148,6 +161,10 @@ const getChannels = async (req: CustomRequest, res: Response) => {
             message: err
         })
     }
+}
+
+const readAllMessages = async (req: CustomRequest, res: Response) => {
+
 }
 
 
