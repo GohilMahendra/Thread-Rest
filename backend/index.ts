@@ -42,39 +42,28 @@ type UserSocket =
     socketId: string,
     userId: string,
   }
-export const users: UserSocket[] = []
+export const usersMap = new Map<string, UserSocket>();
 
 io.on('connection', async (socket) => {
 
   const decodedToken = verifyToken(socket.handshake.auth.token)
   const userId = decodedToken.userId
-  console.log(socket.id,userId)
-  if (userId && users.findIndex(user => user.userId == userId) == -1)
+
+  if (userId && !usersMap.has(userId))
   {
-    console.log(userId,"is connectiting with socet")
-    users.push({
-      socketId: socket.id,
-      userId: userId
+    usersMap.set(userId,{
+      userId: userId,
+      socketId: socket.id
     })
   }
   // Handle socket events here
   socket.on('connect', async () => {
     console.log("connected wuth socjet",socket.id)
-    if (userId && users.findIndex(user => user.userId == userId) == -1)
-      {
-        console.log(userId,"is connectiting with socet")
-        users.push({
-          socketId: socket.id,
-          userId: userId
-        })
-      }
   });
 
 
   socket.on('disconnect', () => {
-    const index = users.findIndex(user => user.userId == userId)
-    if (index != -1)
-      users.splice(index, 1)
+
   });
 
 });

@@ -2,7 +2,7 @@ import mongoose, { mongo } from "mongoose";
 import { CustomRequest } from "../middlewares/jwtTokenAuth";
 import Message from "../models/Message";
 import { Response } from "express";
-import { io, users } from "../../index";
+import { io, usersMap } from "../../index";
 import { v4 as uuidv4 } from "uuid";
 import { getSignedUrl, uploadToS3 } from "../utilities/S3Utils";
 import { generateThumbnail } from "../utilities/Thumbnail";
@@ -11,7 +11,7 @@ import { UserDocument } from "../types/User";
 import { MessageDocument } from "../types/Message";
 const sendMessage = async (req: CustomRequest, res: Response) => {
     try {
-        const userId = req.userId
+        const userId = req.userId 
         const content = req.body.content
         const receiverId = req.params.receiverId
         let channel = await Channel.findOne({
@@ -70,18 +70,20 @@ const sendMessage = async (req: CustomRequest, res: Response) => {
                 }
             }
         }
-        const senderIndex = users.findIndex(user=>user.userId === userId)
-        const recieverIndex = users.findIndex(user=>user.userId === receiverId)
+      
 
-        if(senderIndex != -1)
+        if(userId && usersMap.has(userId) )
         {
-            console.log("came here")
-           io.to(users[senderIndex].socketId).emit("newMessage",messageTochannel)
+           const socketId = usersMap.get(userId)?.socketId
+           if(socketId)
+           io.to(socketId).emit("newMessage",messageTochannel)
         }
 
-        if(recieverIndex != -1)
+        if(usersMap.has(receiverId) )
         {
-            io.to(users[recieverIndex].socketId).emit("newMessage",messageTochannel)
+           const socketId = usersMap.get(receiverId)?.socketId
+           if(socketId)
+           io.to(socketId).emit("newMessage",messageTochannel)
         }
        
         await channel.updateOne({
