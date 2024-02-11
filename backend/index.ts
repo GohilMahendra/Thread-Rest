@@ -37,30 +37,45 @@ export const io = new Server(server, {
 });
 
 
-let users:string[] = []
+type UserSocket =
+  {
+    socketId: string,
+    userId: string,
+  }
+export const users: UserSocket[] = []
 
 io.on('connection', async (socket) => {
 
   const decodedToken = verifyToken(socket.handshake.auth.token)
-    const userId = decodedToken.userId
+  const userId = decodedToken.userId
+  console.log(socket.id,userId)
+  if (userId && users.findIndex(user => user.userId == userId) == -1)
+  {
+    console.log(userId,"is connectiting with socet")
+    users.push({
+      socketId: socket.id,
+      userId: userId
+    })
+  }
   // Handle socket events here
-  socket.on('connect', async() => {
-    if(users.findIndex(user=>user == userId) == -1)
-    users.push(userId || "")
+  socket.on('connect', async () => {
+    console.log("connected wuth socjet",socket.id)
+    if (userId && users.findIndex(user => user.userId == userId) == -1)
+      {
+        console.log(userId,"is connectiting with socet")
+        users.push({
+          socketId: socket.id,
+          userId: userId
+        })
+      }
   });
 
 
   socket.on('disconnect', () => {
-    const index = users.findIndex(user=>user == userId)
-    if(index!=-1)
-    users.splice(index,1)
-
-    console.log('User disconnected:', socket.id);
+    const index = users.findIndex(user => user.userId == userId)
+    if (index != -1)
+      users.splice(index, 1)
   });
-
-  socket.on("joinChannel", (channelId) => {
-    socket.join(channelId);
-  })
 
 });
 

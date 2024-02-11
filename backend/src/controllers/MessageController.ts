@@ -2,7 +2,7 @@ import mongoose, { mongo } from "mongoose";
 import { CustomRequest } from "../middlewares/jwtTokenAuth";
 import Message from "../models/Message";
 import { Response } from "express";
-import { io } from "../../index";
+import { io, users } from "../../index";
 import { v4 as uuidv4 } from "uuid";
 import { getSignedUrl, uploadToS3 } from "../utilities/S3Utils";
 import { generateThumbnail } from "../utilities/Thumbnail";
@@ -13,15 +13,17 @@ const sendMessage = async (req: CustomRequest, res: Response) => {
     try {
         const userId = req.userId
         const content = req.body.content
-        let channelId = req.body.channelId
-        let channel: any = null
-        const recieverId = req.body.recieverId
-        if (!channelId) {
+        const receiverId = req.params.receiverId
+        let channel = await Channel.findOne({
+            members: { $all: [userId, receiverId] }
+        });
+
+        console.log(userId,receiverId,"both re coming")
+        if (!channel) {
             const newChannel = new Channel({
-                members: [userId, recieverId]
+                members: [userId, receiverId]
             })
             channel = newChannel
-            channelId = newChannel.id
             await newChannel.save()
         }
 
@@ -36,7 +38,7 @@ const sendMessage = async (req: CustomRequest, res: Response) => {
             const { mimetype } = file;
             const extention = mimetype.split("/")[1]
             const filename = uuidv4() + "." + extention
-            const filePath = "messages" + "/" + userId + "/" + recieverId + "/" + filename
+            const filePath = "messages" + "/" + userId + "/" + receiverId + "/" + filename
             const result = await uploadToS3(file, filePath)
             const media: mediaType = {
                 media_type: mimetype,
@@ -44,7 +46,7 @@ const sendMessage = async (req: CustomRequest, res: Response) => {
             }
             if (mimetype.includes("video")) {
                 const thumbnailName = uuidv4() + ".jpeg"
-                const thumbnailPath = "messages" + "/" + userId + "/" + recieverId + "/" + thumbnailName
+                const thumbnailPath = "messages" + "/" + userId + "/" + receiverId + "/" + thumbnailName
                 const thumbnail = await generateThumbnail(file, thumbnailPath)
                 media.thumbnail = thumbnail.Key
             }
@@ -53,9 +55,8 @@ const sendMessage = async (req: CustomRequest, res: Response) => {
         const message = new Message({
             content: content,
             sender: new mongoose.Types.ObjectId(userId),
-            reciever: new mongoose.Types.ObjectId(recieverId),
-            media: files,
-            channel: channelId
+            receiver: new mongoose.Types.ObjectId(receiverId),
+            media: files
         })
 
         const messageRespnse = await message.save()
@@ -69,14 +70,25 @@ const sendMessage = async (req: CustomRequest, res: Response) => {
                 }
             }
         }
+        const senderIndex = users.findIndex(user=>user.userId === userId)
+        const recieverIndex = users.findIndex(user=>user.userId === receiverId)
 
-        io.to(channelId).emit("newMessage", messageTochannel)
-        await Channel.findByIdAndUpdate(channelId, {
+        if(senderIndex != -1)
+        {
+            console.log("came here")
+           io.to(users[senderIndex].socketId).emit("newMessage",messageTochannel)
+        }
+
+        if(recieverIndex != -1)
+        {
+            io.to(users[recieverIndex].socketId).emit("newMessage",messageTochannel)
+        }
+       
+        await channel.updateOne({
             lastMessage: messageRespnse._id
         })
         return res.status(201).json({
-            message: "Message sent successFully",
-            channel: channel
+            message: "Message sent successFully"
         });
     }
     catch (err) {
@@ -90,21 +102,25 @@ const sendMessage = async (req: CustomRequest, res: Response) => {
 const getMessages = async (req: CustomRequest, res: Response) => {
     try {
         const userId = req.userId
-        const channelId = req.params.channelId
         const lastOffset = req.query.lastOffset as string
         const pageSizeParam = req.query.pageSize as string;
         const pageSize = parseInt(pageSizeParam, 10) || 10;
-        console.log(pageSize,lastOffset)
-        let quary: any = {
-            channel: new mongoose.Types.ObjectId(channelId),
-        }
+        const receiverId = req.params.receiverId
+        
+        let query:any = {
+            $or: [
+              { sender: new mongoose.Types.ObjectId(userId), receiver: new mongoose.Types.ObjectId(receiverId) },
+              { sender: new mongoose.Types.ObjectId(receiverId), receiver: new mongoose.Types.ObjectId(userId) }
+            ]
+          }
         if (lastOffset) {
-            quary._id = { $lt: new mongoose.Types.ObjectId(lastOffset) }
+            query._id = { $lt: new mongoose.Types.ObjectId(lastOffset) }
         }
-        const conversations = await Message.find(quary)
-            .sort({ created_at: -1, _id: 1 })
+      
+        const conversations = await Message.find(query)
+            .sort({ created_at: -1, _id: -1 })
             .limit(pageSize);
-
+       
         await Promise.all(conversations.map(async (message) => {
             if (message.media && message.media.length > 0) {
                 for (const mediaFile of message.media) {
@@ -121,11 +137,12 @@ const getMessages = async (req: CustomRequest, res: Response) => {
             meta: {
                 pageSize: pageSize,
                 lastOffset: conversations.length >= pageSize ?
-                    conversations[conversations.length - 1]._id : null
+                    conversations[conversations.length-1]._id : null
             }
         })
     }
     catch (err) {
+    
         return res.status(500).json({
             message: err
         })
@@ -140,7 +157,7 @@ const getChannels = async (req: CustomRequest, res: Response) => {
         }).populate<{ members: UserDocument[] }>({
             path: 'members',
             model: 'User'
-        }).populate<{ message: MessageDocument }>({
+        }).populate<{ lastMessage: MessageDocument }>({
             path: "lastMessage",
             model: "Message"
         })

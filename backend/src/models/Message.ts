@@ -10,9 +10,9 @@ const messageSchema = new Schema({
         ref: "User",
         required: true
     },
-    channel:{
+    receiver:{
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Channel",
+        ref: "User",
         required: true
     },
     media: [{

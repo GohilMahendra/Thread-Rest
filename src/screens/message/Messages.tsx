@@ -44,6 +44,7 @@ const Messages = () => {
     const [lastOffset,setLastOffset] = useState<string | null>(null)
     const [media, setMedia] = useState<UploadMedia[]>([])
     const [messages, setMessages] = useState<Message[]>([])
+    const [loading,setloading] = useState<boolean>(false)
     const [userMessage, setUserMessage] = useState("")
     const socketRef = useRef<Socket | null>(null);
     const [channel, setChannel] = useState<string | null>(routeChannel)
@@ -68,10 +69,8 @@ const Messages = () => {
             console.log('Connected to Socket.IO server');
         })
         socketRef.current = socket;
-        socket.emit("joinChannel", channel)
 
         socket.on("newMessage", (message) => {
-            console.log(JSON.stringify(message))
             setMessages(prevMessage => [...prevMessage, message])
             listRef.current?.scrollToEnd({ animated: true })
         })
@@ -99,11 +98,9 @@ const Messages = () => {
     }
     const getMessages = async () => {
         try {
-            if (!channel)
-                return
-
+            setloading(true)
             const token = await getToken()
-            let query =`${BASE_URL}messages/${channel}?pageSize=5`;
+            let query =`${BASE_URL}messages/${user._id}?pageSize=10`;
             const response = await axios.get(query,
                 {
                     headers: {
@@ -114,22 +111,26 @@ const Messages = () => {
             )
             const data: Message[] = response.data?.data
             if (data) {
-                setMessages(data)
+                setMessages(data.reverse())
+                setLastOffset(response.data.meta.lastOffset)
+                setloading(false)
                 listRef.current?.scrollToEnd()
+                
             }
         }
         catch (err) {
+            setloading(false)
             console.log(err)
         }
     }
 
     const getMoreMessages = async () => {
         try {
-            if (!channel || !lastOffset)
-                return
-
+            if(!lastOffset)
+            return
+            setloading(true)
             const token = await getToken()
-            let query =`${BASE_URL}messages/${channel}?pageSize=5`;
+            let query =`${BASE_URL}messages/${user._id}?pageSize=10`;
 
             if (lastOffset) {
                 query += `&lastOffset=${lastOffset}`;
@@ -145,13 +146,16 @@ const Messages = () => {
             )
             const data: Message[] = response.data?.data
             if (data) {
-                setMessages(data)
+              
+                setMessages(prevdata=>[...data.reverse(),...prevdata])
                 if(response.data?.meta)
                 setLastOffset(response.data.meta.lastOffset)
+                setloading(false)
                 listRef.current?.scrollToEnd()
             }
         }
         catch (err) {
+            setloading(false)
             console.log(err)
         }
     }
@@ -185,10 +189,6 @@ const Messages = () => {
             const token = await getToken()
             let formdata = new FormData()
             formdata.append("content", userMessage)
-            if (channel) {
-                formdata.append("channelId", channel)
-            }
-            formdata.append("recieverId", user._id)
 
             if (media && media.length > 0) {
                 media.forEach((file, index) => {
@@ -196,7 +196,7 @@ const Messages = () => {
                 })
             }
             const response = await axios.post(
-                `${BASE_URL}messages`,
+                `${BASE_URL}messages/${user._id}`,
                 formdata,
                 {
                     headers: {
@@ -207,10 +207,6 @@ const Messages = () => {
             );
 
             const data = response.data
-
-            if (data?.channel) {
-                setChannel(data?.channel._id)
-            }
             setMedia([])
             setUserMessage("")
 
@@ -251,9 +247,16 @@ const Messages = () => {
                 style={{
                     flex: 1
                 }}
-                onEndReached={()=>getMoreMessages()}
+                onScroll={(event)=>{
+                    const y = event.nativeEvent.contentOffset.y
+
+                    if(y==0 && lastOffset && !loading)
+                    {
+                        getMoreMessages()
+                    }
+                }}
                 data={messages}
-                keyExtractor={item => item._id}
+                keyExtractor={(item,index) => index.toString()}
                 renderItem={({ item, index }) => renderMessage(item, index)}
             />
             <View style={{
