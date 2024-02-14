@@ -6,6 +6,7 @@ import { Thread, UploadMedia } from "../../types/Post"
 import { PAGE_SIZE } from "../../globals/constants"
 import { RootState } from "../store"
 import { createPost, createRepost } from "../../apis/FeedAPI"
+import { Alert } from "react-native"
 
 export const SignInAction = createAsyncThunk(
     "user/SignInAction",
@@ -31,8 +32,8 @@ export const SignInAction = createAsyncThunk(
             }
             return user
         }
-        catch (err) {
-            console.log(err)
+        catch (err:any) { 
+            Alert.alert("Error",JSON.stringify(err))
             return rejectWithValue(JSON.stringify(err))
         }
     })

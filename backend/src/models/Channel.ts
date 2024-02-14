@@ -6,13 +6,16 @@ const channelSchema = new mongoose.Schema({
         ref: "Message"
     },
     members:[{
-        type: mongoose.Schema.Types.ObjectId,
-        ref:"User"
-    }],
-    unread_message:{
-        type: Number,
-        default: 0
-    }
+        user:{
+            type: mongoose.Schema.Types.ObjectId,
+            ref:"User",
+            required: true
+        },
+        unread_count:{
+            type: mongoose.Schema.Types.Number,
+            default:0
+        }
+    }]
 
 },{ timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }})
 

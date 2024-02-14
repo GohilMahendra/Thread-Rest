@@ -9,6 +9,7 @@ import { scaledFont, timeDifference } from "../../globals/utilities";
 import { User } from "../../types/User";
 import { Channel } from "../../types/Messages";
 import UseTheme from "../../globals/UseTheme";
+import { Badge } from "react-native-elements";
 type ConversationProps =
     {
         onPressChannel: (user: User, channel?: string) => void,
@@ -47,7 +48,19 @@ const ConversationItem = (props: ConversationProps) => {
                                 color: theme.text_color,
                                 maxWidth: "80%"
                             }}>{Conversation?.lastMessage?.content}</Text>
+                        {
+                            Conversation.unread_messages > 0 &&
+                            <Badge
+                            value={Conversation.unread_messages}
+                            badgeStyle={
+                                {
+                                    backgroundColor: theme.primary_color
+                                }
+                            }
+                            />
+                        }
                     </View>
+
                 </View>
             </View>
         </TouchableOpacity>

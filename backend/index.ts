@@ -49,22 +49,23 @@ io.on('connection', async (socket) => {
   const decodedToken = verifyToken(socket.handshake.auth.token)
   const userId = decodedToken.userId
 
-  if (userId && !usersMap.has(userId))
-  {
-    usersMap.set(userId,{
+  if (userId && !usersMap.has(userId)) {
+    usersMap.set(userId, {
       userId: userId,
       socketId: socket.id
     })
   }
   // Handle socket events here
   socket.on('connect', async () => {
-    console.log("connected wuth socjet",socket.id)
+    console.log("connected wuth socjet", socket.id)
   });
 
 
   socket.on('disconnect', () => {
-
-  });
+    if (userId && usersMap.has(userId)) {
+      usersMap.delete(userId); 
+    }
+  })
 
 });
 

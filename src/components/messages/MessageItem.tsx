@@ -51,8 +51,11 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         padding: 10,
+
         margin: 10,
-        borderRadius: 20,
+        borderBottomLeftRadius:10,
+        borderTopLeftRadius: 10,
+        borderBottomRightRadius: 10,
         maxWidth: '70%',
         elevation: 10,
         borderWidth: 0.2

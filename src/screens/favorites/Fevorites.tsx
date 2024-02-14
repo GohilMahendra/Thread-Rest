@@ -24,7 +24,7 @@ import FontAwesome from 'react-native-vector-icons/FontAwesome'
 import FontAwesome5Icon from 'react-native-vector-icons/FontAwesome5'
 import { useNavigation } from '@react-navigation/native'
 import { FavoriteRootComposite } from '../../navigations/Types'
-import { white } from '../../globals/Colors'
+import { white, white_silver } from '../../globals/Colors'
 import { scaledFont } from '../../globals/utilities'
 const Favorites = () => {
   const { theme } = UseTheme()
@@ -370,13 +370,16 @@ const Favorites = () => {
                     width: "100%",
                     borderRadius: 15,
                     //  marginTop:20,
-                    backgroundColor: theme.secondary_color,
-                    padding: 20
+                    backgroundColor: "red",
+                    padding: 20,
+                    justifyContent:"center",
+                    alignItems:"center"
                   }}
                 >
                   <Text style={{
-                    color: "red",
+                    color: white_silver,
                     fontWeight: "bold",
+                    
                     fontSize: scaledFont(15),
                   }}>Delete</Text>
                 </TouchableOpacity>
@@ -388,8 +391,10 @@ const Favorites = () => {
                     width: "100%",
                     borderRadius: 15,
                     marginVertical: 10,
-                    backgroundColor: theme.secondary_color,
-                    padding: 20
+                    backgroundColor: theme.background_color,
+                    padding: 20,
+                    justifyContent:"center",
+                    alignItems:"center"
                   }}
                 >
                   <Text style={{

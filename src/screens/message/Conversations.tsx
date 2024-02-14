@@ -37,17 +37,18 @@ const Conversations = () => {
                 const data = response.data.data
                 const conversations: Channel[] = []
                 data.forEach((conv: any, index: number) => {
-                    const otherUser = conv.members.find((member: any) => member._id !== userId);
+                    const otherUser = conv.members.find((member: any) => member.user._id !== userId);
+                    const currentUser = conv.members.find((member: any) => member.user._id == userId);
                     conversations.push({
                         _id: conv._id,
                         created_at: conv.created_at,
-                        member: otherUser,
+                        member: otherUser.user,
                         updated_at: conv.updated_at,
                         lastMessage: conv?.lastMessage,
-                        unread_messages: conv?.unread_messages
+                        unread_messages: currentUser.unread_count
                     })
                 })
-                console.log(conversations)
+    
                 setChannels(conversations)
                 setloading(false)
             }

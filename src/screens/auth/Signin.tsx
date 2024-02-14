@@ -14,7 +14,6 @@ const SignIn = () => {
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
     const loading = useSelector((state: RootState) => state.User.loading)
-    const error = useSelector((state: RootState) => state.User.error)
     const { theme } = UseTheme()
     const navigation = useNavigation<composeteAuthRootStack>()
     const dispatch = useAppDispatch()
@@ -36,11 +35,11 @@ const SignIn = () => {
                 tintColor={theme.text_color}
                 style={styles.imageLogo}
             />
-            {error && <Text style={{
+            {/* {error && <Text style={{
                 color: "red",
                 fontSize: scaledFont(18),
                 fontWeight: "bold"
-            }}>{error}</Text>}
+            }}>{error}</Text>} */}
             <View style={[styles.inputContainer, { backgroundColor: theme.secondary_color, }]}>
                 <TextInput
                     secureTextEntry={false}
