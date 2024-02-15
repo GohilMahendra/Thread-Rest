@@ -170,7 +170,6 @@ const Messages = () => {
 
         }
         catch (err) {
-            console.log(err)
             setMedia([])
             setUserMessage("")
             setSendMessageLoading(false)
@@ -181,7 +180,6 @@ const Messages = () => {
         try {
             const token = await getToken()
             const path = `${BASE_URL}messages/${user._id}/read_all`
-            console.log(path)
             const response = await axios.patch(path, {}, {
                 headers: {
                     'Content-Type': 'application/json',

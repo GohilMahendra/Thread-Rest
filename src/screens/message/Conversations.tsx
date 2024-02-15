@@ -25,7 +25,6 @@ const Conversations = () => {
     const loading = useSelector((state: RootState) => state.Conversations.loading)
     const navigation = useNavigation<NavigationProp<RootStackType, "Conversations">>()
     const { theme } = UseTheme()
-    const { socket } = useContext(SocketContext)
     const dispatch = useAppDispatch()
 
     const onNavigateMessage = (user: User, channelId?: string) => {
@@ -34,7 +33,6 @@ const Conversations = () => {
             channel: channelId
         })
     }
-
 
     const renderConversations = (item: Channel, index: number) => {
         return (

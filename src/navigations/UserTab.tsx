@@ -11,6 +11,10 @@ import CreatePost from "../screens/home/CreatePost";
 import { NavigationProp, useNavigation } from "@react-navigation/native";
 import { RootStackType } from "./RootStack";
 import FavoriteStack from "./FavoriteStack";
+import { useSelector } from "react-redux";
+import { RootState } from "../redux/store";
+import { View } from "react-native";
+import { Badge } from "react-native-elements";
 export type UserTabType =
     {
         HomeStack: undefined,
@@ -23,6 +27,7 @@ const UserTab = () => {
     const UserTabNavigator = createBottomTabNavigator<UserTabType>()
     const navigation = useNavigation<NavigationProp<RootStackType, "UserTab">>()
     const { theme } = UseTheme()
+    const unreadCount = useSelector((state: RootState) => state.Conversations.unread_messages)
     return (
 
         <UserTabNavigator.Navigator
@@ -102,12 +107,29 @@ const UserTab = () => {
                 component={ProfileStack}
                 options={{
                     tabBarIcon: ({ color, focused, size }) => (
-                        <FontAwesome5
-                            name={"user"}
-                            size={25}
-                            solid={focused ? true : false}
-                            color={focused ? theme.text_color : theme.secondary_text_color}
+                        <View>
+                            <FontAwesome5
+                                name={"user"}
+                                size={25}
+                                solid={focused ? true : false}
+                                color={focused ? theme.text_color : theme.secondary_text_color}
+                            />
+
+                        {unreadCount > 0 && 
+                        <View
+                        style={{
+                            position:"absolute",
+                            backgroundColor: theme.primary_color,
+                            top:-3,
+                            zIndex:1000,
+                            width:5,
+                            borderRadius:5,
+                            height:5,
+                            right: -3,
+                        }}
                         />
+                        }
+                        </View>
                     )
                 }}
             />

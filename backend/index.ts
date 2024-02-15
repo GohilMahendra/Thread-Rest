@@ -60,10 +60,8 @@ io.on('connection', async (socket) => {
       socketId: socket.id
     })
   }
-  // Handle socket events here
 
   socket.on("userConversation",(recieverId:string)=>{
-    console.log(userId,recieverId)
     if(userId)
     activeConversations.set(userId,{
       recieverId: recieverId,
@@ -77,7 +75,7 @@ io.on('connection', async (socket) => {
   })
 
   socket.on('connect', async () => {
-    console.log("connected wuth socjet", socket.id)
+    console.log("connected wuth socket", socket.id)
   });
 
 

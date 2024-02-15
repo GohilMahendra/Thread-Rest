@@ -22,11 +22,11 @@ export const ConversationSlice = createSlice({
     name: "Conversations",
     initialState: initialState,
     reducers: {
-        readAll:(state,action:PayloadAction<string>)=>{
+        readAll: (state, action: PayloadAction<string>) => {
             const senderId = action.payload
             state.conversations = state.conversations.map(conversation => {
                 if (conversation.member._id === senderId) {
-                    state.unread_messages-= conversation.unread_messages
+                    state.unread_messages -= conversation.unread_messages
                     return {
                         ...conversation,
                         unread_messages: 0
@@ -35,11 +35,16 @@ export const ConversationSlice = createSlice({
                 return conversation;
             });
         },
-        updateUnreadCount: (state, action: PayloadAction<string>) => {
-            const senderId = action.payload;
+        updateUnreadCount: (state, action: PayloadAction<{
+            senderId: string,
+            channel?: any
+        }>) => {
+            const senderId = action.payload.senderId;
             state.unread_messages++
+            let isPresentChat: boolean = false
             state.conversations = state.conversations.map(conversation => {
                 if (conversation.member._id === senderId) {
+                    isPresentChat = true
                     return {
                         ...conversation,
                         unread_messages: conversation.unread_messages + 1
@@ -47,6 +52,22 @@ export const ConversationSlice = createSlice({
                 }
                 return conversation;
             });
+
+            if(!isPresentChat && action.payload.channel)
+            {
+                const channel = action.payload.channel
+                const otherUser = channel.members.find((member: any) => member.user._id == senderId);
+                const currentUser = channel.members.find((member: any) => member.user._id != senderId);
+            
+                state.conversations.push({
+                    _id: channel._id,
+                    created_at: channel.created_at,
+                    member: otherUser.user,
+                    updated_at: channel.updated_at,
+                    lastMessage: channel?.lastMessage,
+                    unread_messages: 1
+                })
+            }
         },
     },
     extraReducers(builder) {
@@ -66,11 +87,11 @@ export const ConversationSlice = createSlice({
             state.loading = false
             state.error = action.payload as string
         })
-        builder.addCase(fetchUnreadCount.fulfilled,(state,action:PayloadAction<{count:number}>)=>{
-            console.log(action.payload.count,"count from bckend")
+        builder.addCase(fetchUnreadCount.fulfilled, (state, action: PayloadAction<{ count: number }>) => {
+            console.log(action.payload.count, "count from bckend")
             state.unread_messages = action.payload.count
         })
     },
 })
-export const { updateUnreadCount,readAll } = ConversationSlice.actions
+export const { updateUnreadCount, readAll } = ConversationSlice.actions
 export default ConversationSlice.reducer

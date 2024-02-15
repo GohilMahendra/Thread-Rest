@@ -1,4 +1,4 @@
-import mongoose, { Schema, mongo } from "mongoose";
+import mongoose from "mongoose";
 import { CustomRequest } from "../middlewares/jwtTokenAuth";
 import Message from "../models/Message";
 import { Response } from "express";
@@ -15,7 +15,7 @@ const sendMessage = async (req: CustomRequest, res: Response) => {
         const content = req.body.content
         const receiverId = req.params.receiverId
         const media = req.files as Express.Multer.File[]
-
+        let isNewConversation: boolean = false
         if (!media && !content) {
             return res.status(400).json({
                 message: "Invalid params"
@@ -37,6 +37,7 @@ const sendMessage = async (req: CustomRequest, res: Response) => {
             });
             channel = newChannel;
             await newChannel.save();
+            isNewConversation = true
         }
 
         type mediaType = {
@@ -81,6 +82,10 @@ const sendMessage = async (req: CustomRequest, res: Response) => {
                 }
             }
         }
+
+        await channel.updateOne({
+            lastMessage: messageRespnse._id
+        })
         if (userId && usersMap.has(userId)) {
             const socketId = usersMap.get(userId)?.socketId
             if (socketId)
@@ -88,7 +93,7 @@ const sendMessage = async (req: CustomRequest, res: Response) => {
         }
         if (usersMap.has(receiverId)) {
             const socketId = usersMap.get(receiverId)?.socketId
-            const isChattingWithMe  = activeConversations.get(receiverId)?.userId == userId
+            const isChattingWithMe = activeConversations.get(receiverId)?.userId == userId
             if (socketId && isChattingWithMe)
                 io.to(socketId).emit("newMessage", messageTochannel)
             else {
@@ -98,8 +103,35 @@ const sendMessage = async (req: CustomRequest, res: Response) => {
                         { $inc: { [`members.${index}.unread_count`]: 1 } }
                     );
                 }
-                if(socketId)
-                io.to(socketId).emit("newMessageNotification",{senderId: userId})
+                if (socketId) {
+                    if (isNewConversation) {
+                        const channelNotification = await Channel.findOne({
+                            $and: [
+                                { 'members.user': userId },
+                                { 'members.user': receiverId }
+                            ]
+                        }).populate<{ members: { user: UserDocument, unread_count: Number }[] }>({
+                            path: 'members.user',
+                            model: 'User',
+
+                        })
+                            .select("-otp -password -token")
+                            .populate<{ lastMessage: MessageDocument }>({
+                                path: "lastMessage",
+                                model: "Message"
+                            })
+                        if (channelNotification) {
+                            for (const member of channelNotification.members) {
+                                if (member.user.profile_picture)
+                                    member.user.profile_picture = await getSignedUrl(member.user.profile_picture)
+                            }
+                            io.to(socketId).emit("newMessageNotification", { senderId: userId, channel: channelNotification })
+                        }
+                    }
+                    else {
+                        io.to(socketId).emit("newMessageNotification", { senderId: userId })
+                    }
+                }
             }
         }
         else {
@@ -111,9 +143,6 @@ const sendMessage = async (req: CustomRequest, res: Response) => {
             }
         }
 
-        await channel.updateOne({
-            lastMessage: messageRespnse._id
-        })
         return res.status(201).json({
             message: "Message sent successFully"
         });
@@ -232,8 +261,6 @@ const readAllMessages = async (req: CustomRequest, res: Response) => {
             return res.status(404).json({ message: 'Channel not found.' });
         }
 
-        console.log("success to unread")
-
         return res.status(200).json({ message: 'All messages marked as read for channel.' });
 
     }
@@ -244,21 +271,19 @@ const readAllMessages = async (req: CustomRequest, res: Response) => {
     }
 }
 
-const getAllUnreadCounts = async(req: CustomRequest, res:Response) =>{
-    console.log("rote called")
-    try
-    {
+const getAllUnreadCounts = async (req: CustomRequest, res: Response) => {
+    try {
         const userId = req.userId
-        const counts =await Channel.aggregate([
+        const counts = await Channel.aggregate([
             {
                 $match: {
-                    "members.user":new mongoose.Types.ObjectId(userId)
+                    "members.user": new mongoose.Types.ObjectId(userId)
                 }
             },
             { $unwind: "$members" },
             {
                 $match: {
-                    "members.user":new mongoose.Types.ObjectId(userId)
+                    "members.user": new mongoose.Types.ObjectId(userId)
                 }
             },
             {
@@ -268,23 +293,18 @@ const getAllUnreadCounts = async(req: CustomRequest, res:Response) =>{
                 }
             }
         ])
-        console.log(counts)
-        if(counts.length > 0)
-        {
+        if (counts.length > 0) {
             return res.status(200).json({
                 total_unread_count: counts[0].totalUnreadCount
             })
         }
-        else
-        {
+        else {
             return res.status(200).json({
                 total_unread_count: 0
             })
         }
     }
-    catch(err)
-    {
-        console.log(JSON.stringify(err))
+    catch (err) {
         return res.status(500).json({
             message: "error from 500"
         })

@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import React, { useContext, useEffect } from 'react'
 import { SafeAreaView, StyleSheet } from "react-native";
-import { useAppDispatch } from '../../redux/store';
+import { RootState, useAppDispatch } from '../../redux/store';
 import { SignInAction } from '../../redux/actions/UserActions';
 import { compositeRootUserTab } from '../../navigations/Types';
 import UseTheme from '../../globals/UseTheme';
@@ -13,6 +13,7 @@ import { SocketContext } from '../../globals/SocketProvider';
 import io from "socket.io-client";
 import { updateUnreadCount } from '../../redux/slices/ConversationSlice';
 import { fetchUnreadCount } from '../../redux/actions/ConversationActions';
+import { useSelector } from 'react-redux';
 const SplashScreen = () => {
     const dispatch = useAppDispatch()
     const navigation = useNavigation<compositeRootUserTab>()
@@ -41,8 +42,12 @@ const SplashScreen = () => {
                         setSocket(socket)
                     })
                     if (socket) {
-                        socket.on("newMessageNotification", ({ senderId }) => {
-                            dispatch(updateUnreadCount(senderId))
+                        socket.on("newMessageNotification", ({ senderId,channel }) => {
+                        
+                            dispatch(updateUnreadCount({
+                                senderId: senderId,
+                                channel: channel
+                            }))
                         })
                     }
                     dispatch(fetchUnreadCount(""))
