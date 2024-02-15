@@ -193,6 +193,11 @@ Make sure you have Node.js and npm installed on your machine. If not, you can do
 | ------------ | ------------ | ------------ |
 | ![Screenshot 1](screenshots/dark%20mode/Simulator%20Screenshot%20-%20iPhone%2015%20Pro%20Max%20-%202023-12-31%20at%2006.26.36.png) | ![Screenshot 2](screenshots/dark%20mode/Simulator%20Screenshot%20-%20iPhone%2015%20Pro%20Max%20-%202023-12-31%20at%2006.27.20.png) | ![Screenshot 3](screenshots/dark%20mode/Simulator%20Screenshot%20-%20iPhone%2015%20Pro%20Max%20-%202023-12-31%20at%2006.27.47.png) |
 
+| Real-Time Chat 1 | Real-Time Chat 2 | Real-Time Chat 3 |
+| ---------------- | ---------------- | ---------------- |
+| ![Screenshot 1](screenshots/dark%20mode/Simulator%20Screenshot%20-%20iPhone%2015%20-%202024-02-16%20at%2002.06.43.png) | ![Screenshot 2](screenshots/dark%20mode/Simulator%20Screenshot%20-%20iPhone%2015%20-%202024-02-16%20at%2002.06.52.png) | ![Screenshot 3](screenshots/dark%20mode/Simulator%20Screenshot%20-%20iPhone%2015%20-%202024-02-16%20at%2002.07.35.png) |
+
+
 ### Light Mode
 | Sign In| Sign Up | Feed1 |
 | ------------ | ------------ | ------------ |
@@ -233,5 +238,9 @@ Make sure you have Node.js and npm installed on your machine. If not, you can do
 | Profile | Settings ||
 | ------------ | ------------ | ------------ |
 | ![Screenshot 1](screenshots/light%20mode/Simulator%20Screenshot%20-%20iPhone%2015%20Pro%20Max%20-%202023-12-31%20at%2006.08.48.png) | ![Screenshot 2](screenshots/light%20mode/Simulator%20Screenshot%20-%20iPhone%2015%20Pro%20Max%20-%202023-12-31%20at%2006.09.11.png) ||
+
+| Real-Time Chat 1 | Real-Time Chat 2 | Real-Time Chat 3 |
+| ---------------- | ---------------- | ---------------- |
+| ![Screenshot 1](screenshots/light%20mode/Simulator Screenshot - iPhone 15 - 2024-02-15 at 22.42.03.png) | ![Screenshot 2](screenshots/light%20mode/Simulator%20Screenshot%20-%20iPhone%2015%20-%202024-02-16%20at%2002.06.52.png) | ![Screenshot 3](screenshots/light%20mode/Simulator Screenshot - iPhone 15 - 2024-02-16 at 02.08.04.png) |
 
 

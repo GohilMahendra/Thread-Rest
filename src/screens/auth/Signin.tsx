@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useContext, useState } from 'react'
 import { View, Text, SafeAreaView, Image, Dimensions, TextInput, TouchableOpacity, Pressable, StyleSheet } from 'react-native'
 import { useNavigation } from '@react-navigation/native';
 import UseTheme from '../../globals/UseTheme';
@@ -8,7 +8,12 @@ import { useSelector } from 'react-redux';
 import Loader from '../../components/global/Loader';
 import { composeteAuthRootStack } from '../../navigations/Types';
 import { applogo } from '../../globals/asstes';
-import { scaledFont } from '../../globals/utilities';
+import { getToken, scaledFont } from '../../globals/utilities';
+import io from "socket.io-client";
+import { updateUnreadCount } from '../../redux/slices/ConversationSlice';
+import { SocketContext } from '../../globals/SocketProvider';
+import { fetchUnreadCount } from '../../redux/actions/ConversationActions';
+import { BASE_URL } from '../../globals/constants';
 const { height, width } = Dimensions.get("window")
 const SignIn = () => {
     const [email, setEmail] = useState("")
@@ -16,6 +21,7 @@ const SignIn = () => {
     const loading = useSelector((state: RootState) => state.User.loading)
     const { theme } = UseTheme()
     const navigation = useNavigation<composeteAuthRootStack>()
+    const { socket,setSocket} = useContext(SocketContext)
     const dispatch = useAppDispatch()
     const signInUser = async () => {
         const responseStaus = await dispatch(SignInAction({
@@ -24,6 +30,27 @@ const SignIn = () => {
         }))
 
         if (SignInAction.fulfilled.match(responseStaus)) {
+            const token =await getToken()
+            const socket = io(BASE_URL, {
+                auth: {
+                    token: token
+                }
+            });
+
+            socket.on('connect', () => {
+                console.log('Connected to Socket.IO server');
+                setSocket(socket)
+            })
+            if (socket) {
+                socket.on("newMessageNotification", ({ senderId,channel }) => {
+                
+                    dispatch(updateUnreadCount({
+                        senderId: senderId,
+                        channel: channel
+                    }))
+                })
+            }
+            dispatch(fetchUnreadCount(""))
             navigation.navigate("UserTab")
         }
     }
