@@ -88,7 +88,6 @@ export const ConversationSlice = createSlice({
             state.error = action.payload as string
         })
         builder.addCase(fetchUnreadCount.fulfilled, (state, action: PayloadAction<{ count: number }>) => {
-            console.log(action.payload.count, "count from bckend")
             state.unread_messages = action.payload.count
         })
     },

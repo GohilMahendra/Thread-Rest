@@ -31,7 +31,8 @@ const MessageItem = (props: MessageProps) => {
             key={message._id}>
             <Text style={{
                 color: isCurrentUser ? theme.text_color : white,
-                justifyContent: "center"
+                justifyContent: "center",
+                marginVertical:5
             }}>{message?.content}</Text>
             {
                 message?.media &&
