@@ -42,8 +42,13 @@ type UserSocket =
     socketId: string,
     userId: string,
   }
+ type ActiveConversations =
+ {
+  userId: string,
+  recieverId: string
+ }
 export const usersMap = new Map<string, UserSocket>();
-
+export const activeConversations = new Map<String,ActiveConversations>()
 io.on('connection', async (socket) => {
 
   const decodedToken = verifyToken(socket.handshake.auth.token)
@@ -56,6 +61,21 @@ io.on('connection', async (socket) => {
     })
   }
   // Handle socket events here
+
+  socket.on("userConversation",(recieverId:string)=>{
+    console.log(userId,recieverId)
+    if(userId)
+    activeConversations.set(userId,{
+      recieverId: recieverId,
+      userId: userId
+    })
+  })
+
+  socket.on("leaveActiveConversation",()=>{
+    if(userId)
+    activeConversations.delete(userId)
+  })
+
   socket.on('connect', async () => {
     console.log("connected wuth socjet", socket.id)
   });
@@ -64,6 +84,7 @@ io.on('connection', async (socket) => {
   socket.on('disconnect', () => {
     if (userId && usersMap.has(userId)) {
       usersMap.delete(userId); 
+      activeConversations.delete(userId)
     }
   })
 

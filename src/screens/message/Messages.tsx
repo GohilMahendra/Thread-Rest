@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import {
     Dimensions,
     SafeAreaView,
@@ -6,7 +6,6 @@ import {
     Text,
     TextInput,
     View,
-    BackHandler,
     FlatList,
     ActivityIndicator
 } from "react-native";
@@ -31,9 +30,11 @@ import { launchImageLibrary } from "react-native-image-picker";
 import { UploadMedia } from "../../types/Post";
 import { Message } from "../../types/Messages";
 import { useSelector } from "react-redux";
-import { RootState } from "../../redux/store";
+import { RootState, useAppDispatch } from "../../redux/store";
 import MessageItem from "../../components/messages/MessageItem";
-
+import { fetchMessages } from "../../apis/MessageApi";
+import { SocketContext } from "../../globals/SocketProvider";
+import { readAll } from "../../redux/slices/ConversationSlice";
 const { width } = Dimensions.get("screen")
 const Messages = () => {
     const { theme } = UseTheme()
@@ -46,11 +47,13 @@ const Messages = () => {
     const [media, setMedia] = useState<UploadMedia[]>([])
     const [messages, setMessages] = useState<Message[]>([])
     const [loading, setloading] = useState<boolean>(false)
+    const [loadMoreLoading, setLoadMoreLoading] = useState<boolean>(false)
     const [sendMessageLoading, setSendMessageLoading] = useState<boolean>(false)
     const [userMessage, setUserMessage] = useState("")
-    const socketRef = useRef<Socket | null>(null);
+    const { socket } = useContext(SocketContext)
     const [channel, setChannel] = useState<string | null>(routeChannel)
     const listRef = useRef<FlatList | null>(null)
+    const dispatch = useAppDispatch()
     const renderMessage = (message: Message, index: number) => {
         return (
             <MessageItem
@@ -59,27 +62,6 @@ const Messages = () => {
         )
     }
 
-    const initliseSocket = async () => {
-        const token = await getToken()
-        const socket = io('http://localhost:3000', {
-            auth: {
-                token: token
-            }
-        });
-
-        socket.on('connect', () => {
-            console.log('Connected to Socket.IO server');
-        })
-        socket.on('disconnect', () => {
-            console.log("Disconnedcted from socket.io")
-        })
-        socketRef.current = socket;
-
-        socket.on("newMessage", (message) => {
-            setMessages(prevMessage => [...prevMessage, message])
-            listRef.current?.scrollToEnd({ animated: true })
-        })
-    }
     const openImagePicker = async () => {
         const response = await launchImageLibrary({
             mediaType: "mixed",
@@ -104,23 +86,16 @@ const Messages = () => {
     const getMessages = async () => {
         try {
             setloading(true)
-            const token = await getToken()
-            let query = `${BASE_URL}messages/${user._id}?pageSize=10`;
-            const response = await axios.get(query,
-                {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'token': token
-                    }
-                }
-            )
-            const data: Message[] = response.data?.data
+            const response = await fetchMessages({
+                pageSize: 10,
+                receiverId: user._id,
+            })
+            const data: Message[] = response.data
             if (data) {
                 setMessages(data.reverse())
-                setLastOffset(response.data.meta.lastOffset)
+                setLastOffset(response.meta.lastOffset)
                 setloading(false)
                 listRef.current?.scrollToEnd()
-
             }
         }
         catch (err) {
@@ -133,40 +108,30 @@ const Messages = () => {
         try {
             if (!lastOffset)
                 return
-            setloading(true)
-            const token = await getToken()
-            let query = `${BASE_URL}messages/${user._id}?pageSize=10`;
-
-            if (lastOffset) {
-                query += `&lastOffset=${lastOffset}`;
-            }
-
-            const response = await axios.get(query,
-                {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'token': token
-                    }
-                }
-            )
-            const data: Message[] = response.data?.data
+            setLoadMoreLoading(true)
+            const response = await fetchMessages({
+                pageSize: 10,
+                receiverId: user._id,
+                lastOffset: lastOffset
+            })
+            const data: Message[] = response.data
             if (data) {
-
                 setMessages(prevdata => [...data.reverse(), ...prevdata])
+                listRef.current?.scrollToIndex({ index: data.length, animated: true });
                 if (response.data?.meta)
-                    setLastOffset(response.data.meta.lastOffset)
-                setloading(false)
-                listRef.current?.scrollToEnd()
+                    setLastOffset(response.meta.lastOffset)
             }
+            setLoadMoreLoading(false)
         }
         catch (err) {
-            setloading(false)
+            setLoadMoreLoading(false)
             console.log(err)
         }
     }
 
     const onBackPress = async () => {
-        socketRef.current?.disconnect()
+        if (socket)
+            socket.emit("leaveActiveConversation")
         navigation.goBack()
     }
 
@@ -224,7 +189,7 @@ const Messages = () => {
                 }
             });
 
-            console.log(response.data)
+            dispatch(readAll(user._id))
         }
         catch (err: any) {
             console.log(err)
@@ -232,18 +197,16 @@ const Messages = () => {
     }
 
     useEffect(() => {
-        const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
-            socketRef.current?.disconnect()
-            return true;
-        });
+        if (socket) {
+            socket.emit("userConversation", user._id)
+            socket.on("newMessage", (message) => {
+                setMessages(prevMessage => [...prevMessage, message])
+                listRef.current?.scrollToEnd({ animated: true })
+            })
+        }
 
         getMessages()
         readAllMessages()
-        initliseSocket()
-        return () => {
-            socketRef.current?.disconnect()
-            backHandler.remove();
-        };
     }, []);
     return (
         <SafeAreaView style={{ flex: 1, backgroundColor: theme.background_color }}>
@@ -275,6 +238,12 @@ const Messages = () => {
                 <View />
             </View>
             <FlatList
+                ListHeaderComponent={loadMoreLoading ?
+                    <ActivityIndicator
+                        animating
+                        color={theme.text_color}
+                    /> : null
+                }
                 ref={ref => listRef.current = ref}
                 contentContainerStyle={{
                     paddingBottom: 100

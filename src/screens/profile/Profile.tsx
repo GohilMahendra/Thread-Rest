@@ -23,6 +23,7 @@ import Animated, {
   withTiming
 } from 'react-native-reanimated';
 import { RootStackType } from '../../navigations/RootStack'
+import { Badge } from 'react-native-elements'
 const { height } = Dimensions.get("screen")
 const Profile = () => {
   const user = useSelector((state: RootState) => state.User.user)
@@ -35,6 +36,7 @@ const Profile = () => {
   const rootNavigation =  useNavigation<NavigationProp<RootStackType, "Conversations">>()
   const [selectedSection, setSelectedSection] = useState<"Thread" | "Repost">("Thread")
   const threeDotPressModalRef = useRef<BottomSheetModal>(null)
+  const unreadCount = useSelector((state: RootState) => state.Conversations.unread_messages)
   const snapPoints = useMemo(() => ['30%'], []);
   const [postId, setPostId] = useState("")
   const { theme } = UseTheme()
@@ -89,6 +91,7 @@ const Profile = () => {
     return (
       <View>
         <View style={styles.headerContainer}>
+          <View>
           <Feather
             onPress={()=>rootNavigation.navigate("Conversations")}
             name='message-circle'
@@ -96,6 +99,20 @@ const Profile = () => {
             color={theme.text_color}
             style={{ marginRight: 10 }}
           />
+          {
+            unreadCount > 0 &&
+            <Badge
+            value={unreadCount}
+            badgeStyle={{
+              position:'absolute',
+              zIndex:1000,
+              bottom:scaledFont(10),
+              right:scaledFont(2)
+            }}
+            />
+          }
+          </View>
+        
           <AntDesign
             //onPress={() => navigation.navigate("Settings")}
             name='instagram'

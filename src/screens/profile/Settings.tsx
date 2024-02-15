@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
 import { View, Alert, Text, SafeAreaView, TouchableOpacity, StyleSheet, Switch } from 'react-native';
 import UseTheme from "../../globals/UseTheme";
 import FontAwesome from "react-native-vector-icons/FontAwesome";
@@ -8,11 +8,12 @@ import { useNavigation, CommonActions } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ProfileRootComposite } from "../../navigations/Types";
 import { scaledFont } from "../../globals/utilities";
+import { SocketContext } from "../../globals/SocketProvider";
 const Settings = () => {
     const { theme, setTheme } = UseTheme()
     const navigation = useNavigation<ProfileRootComposite>()
     const [darkTheme, setDarkTheme] = useState(theme.mode == "dark")
-
+    const { socket,setSocket } = useContext(SocketContext)
     const changeTheme = async () => {
         setTheme(darkTheme ? "light" : "dark")
         setDarkTheme(!darkTheme)
@@ -48,6 +49,12 @@ const Settings = () => {
                 routes: [{ name: 'AuthStack' }],
             }),
         })
+
+        if(socket)
+        {
+            socket.disconnect()
+            setSocket(null)
+        }
     }
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: theme.background_color }]}>

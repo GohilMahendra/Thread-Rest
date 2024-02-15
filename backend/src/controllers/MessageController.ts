@@ -2,7 +2,7 @@ import mongoose, { Schema, mongo } from "mongoose";
 import { CustomRequest } from "../middlewares/jwtTokenAuth";
 import Message from "../models/Message";
 import { Response } from "express";
-import { io, usersMap } from "../../index";
+import { activeConversations, io, usersMap } from "../../index";
 import { v4 as uuidv4 } from "uuid";
 import { getSignedUrl, uploadToS3 } from "../utilities/S3Utils";
 import { generateThumbnail } from "../utilities/Thumbnail";
@@ -88,22 +88,23 @@ const sendMessage = async (req: CustomRequest, res: Response) => {
         }
         if (usersMap.has(receiverId)) {
             const socketId = usersMap.get(receiverId)?.socketId
-            if (socketId)
+            const isChattingWithMe  = activeConversations.get(receiverId)?.userId == userId
+            if (socketId && isChattingWithMe)
                 io.to(socketId).emit("newMessage", messageTochannel)
             else {
                 const index = channel.members.findIndex(element => element.user.equals(new mongoose.Types.ObjectId(receiverId)));
                 if (index != -1) {
-                    console.log("reciever is offline 2")
                     await channel.updateOne(
                         { $inc: { [`members.${index}.unread_count`]: 1 } }
                     );
                 }
+                if(socketId)
+                io.to(socketId).emit("newMessageNotification",{senderId: userId})
             }
         }
         else {
             const index = channel.members.findIndex(element => element.user.equals(new mongoose.Types.ObjectId(receiverId)));
             if (index != -1) {
-                console.log("reciever is offline 2")
                 await channel.updateOne(
                     { $inc: { [`members.${index}.unread_count`]: 1 } }
                 );
@@ -243,10 +244,58 @@ const readAllMessages = async (req: CustomRequest, res: Response) => {
     }
 }
 
+const getAllUnreadCounts = async(req: CustomRequest, res:Response) =>{
+    console.log("rote called")
+    try
+    {
+        const userId = req.userId
+        const counts =await Channel.aggregate([
+            {
+                $match: {
+                    "members.user":new mongoose.Types.ObjectId(userId)
+                }
+            },
+            { $unwind: "$members" },
+            {
+                $match: {
+                    "members.user":new mongoose.Types.ObjectId(userId)
+                }
+            },
+            {
+                $group: {
+                    _id: null,
+                    totalUnreadCount: { $sum: "$members.unread_count" }
+                }
+            }
+        ])
+        console.log(counts)
+        if(counts.length > 0)
+        {
+            return res.status(200).json({
+                total_unread_count: counts[0].totalUnreadCount
+            })
+        }
+        else
+        {
+            return res.status(200).json({
+                total_unread_count: 0
+            })
+        }
+    }
+    catch(err)
+    {
+        console.log(JSON.stringify(err))
+        return res.status(500).json({
+            message: "error from 500"
+        })
+    }
+}
+
 
 export default {
     sendMessage,
     getMessages,
     readAllMessages,
-    getChannels
+    getChannels,
+    getAllUnreadCounts
 }

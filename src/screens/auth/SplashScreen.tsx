@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
-import React, { useEffect } from 'react'
-import { SafeAreaView, StyleSheet, Text } from "react-native";
+import React, { useContext, useEffect } from 'react'
+import { SafeAreaView, StyleSheet } from "react-native";
 import { useAppDispatch } from '../../redux/store';
 import { SignInAction } from '../../redux/actions/UserActions';
 import { compositeRootUserTab } from '../../navigations/Types';
@@ -9,11 +9,15 @@ import UseTheme from '../../globals/UseTheme';
 import { Image } from 'react-native';
 import { applogo } from '../../globals/asstes';
 import { scaledFont } from '../../globals/utilities';
-
+import { SocketContext } from '../../globals/SocketProvider';
+import io from "socket.io-client";
+import { updateUnreadCount } from '../../redux/slices/ConversationSlice';
+import { fetchUnreadCount } from '../../redux/actions/ConversationActions';
 const SplashScreen = () => {
     const dispatch = useAppDispatch()
     const navigation = useNavigation<compositeRootUserTab>()
     const { theme, setTheme } = UseTheme()
+    const { socket, setSocket } = useContext(SocketContext)
     const signIn = async () => {
         try {
             const email = await AsyncStorage.getItem("email")
@@ -25,6 +29,23 @@ const SplashScreen = () => {
             else {
                 const fullfilled = await dispatch(SignInAction({ email, password }))
                 if (SignInAction.fulfilled.match(fullfilled)) {
+                    const token = await AsyncStorage.getItem("token")
+                    const socket = io('http://localhost:3000', {
+                        auth: {
+                            token: token
+                        }
+                    });
+
+                    socket.on('connect', () => {
+                        console.log('Connected to Socket.IO server');
+                        setSocket(socket)
+                    })
+                    if (socket) {
+                        socket.on("newMessageNotification", ({ senderId }) => {
+                            dispatch(updateUnreadCount(senderId))
+                        })
+                    }
+                    dispatch(fetchUnreadCount(""))
                     navigation.reset({
                         index: 0,
                         routes: [{ name: "UserTab" }],
