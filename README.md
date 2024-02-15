@@ -241,6 +241,7 @@ Make sure you have Node.js and npm installed on your machine. If not, you can do
 
 | Real-Time Chat 1 | Real-Time Chat 2 | Real-Time Chat 3 |
 | ---------------- | ---------------- | ---------------- |
-| ![Screenshot 1](screenshots/light%20mode/Simulator Screenshot - iPhone 15 - 2024-02-15 at 22.42.03.png) | ![Screenshot 2](screenshots/light%20mode/Simulator%20Screenshot%20-%20iPhone%2015%20-%202024-02-16%20at%2002.06.52.png) | ![Screenshot 3](screenshots/light%20mode/Simulator Screenshot - iPhone 15 - 2024-02-16 at 02.08.04.png) |
+| ![Screenshot 1](screenshots/light%20mode/Simulator%20Screenshot%20-%20iPhone%2015%20-%202024-02-15%20at%2022.42.03.png) | ![Screenshot 2](screenshots/light%20mode/Simulator%20Screenshot%20-%20iPhone%2015%20-%202024-02-16%20at%2002.06.52.png) | ![Screenshot 3](screenshots/light%20mode/Simulator%20Screenshot%20-%20iPhone%2015%20-%202024-02-16%20at%2002.08.04.png) |
+
 
 
