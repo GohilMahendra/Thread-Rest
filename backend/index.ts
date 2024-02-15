@@ -63,10 +63,13 @@ io.on('connection', async (socket) => {
 
   socket.on("userConversation",(recieverId:string)=>{
     if(userId)
-    activeConversations.set(userId,{
-      recieverId: recieverId,
-      userId: userId
-    })
+    {
+      activeConversations.set(userId,{
+        recieverId: recieverId,
+        userId: userId
+      })
+    }
+   
   })
 
   socket.on("leaveActiveConversation",()=>{

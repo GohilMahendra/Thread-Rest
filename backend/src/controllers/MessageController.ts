@@ -93,9 +93,11 @@ const sendMessage = async (req: CustomRequest, res: Response) => {
         }
         if (usersMap.has(receiverId)) {
             const socketId = usersMap.get(receiverId)?.socketId
-            const isChattingWithMe = activeConversations.get(receiverId)?.userId == userId
-            if (socketId && isChattingWithMe)
+
+            const isChattingWithMe = activeConversations.get(receiverId)?.recieverId === userId;
+            if (socketId && isChattingWithMe) {
                 io.to(socketId).emit("newMessage", messageTochannel)
+            }
             else {
                 const index = channel.members.findIndex(element => element.user.equals(new mongoose.Types.ObjectId(receiverId)));
                 if (index != -1) {

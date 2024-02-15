@@ -131,7 +131,10 @@ const Messages = () => {
 
     const onBackPress = async () => {
         if (socket)
+        {
             socket.emit("leaveActiveConversation")
+            socket?.off("newMessage")
+        }
         navigation.goBack()
     }
 
@@ -197,7 +200,7 @@ const Messages = () => {
     useEffect(() => {
         if (socket) {
             socket.emit("userConversation", user._id)
-            socket.on("newMessage", (message) => {
+            socket.on("newMessage", (message:any) => {
                 setMessages(prevMessage => [...prevMessage, message])
                 listRef.current?.scrollToEnd({ animated: true })
             })
@@ -205,6 +208,10 @@ const Messages = () => {
 
         getMessages()
         readAllMessages()
+
+        return ()=>{
+            socket?.off("newMessage")
+        }
     }, []);
     return (
         <SafeAreaView style={{ flex: 1, backgroundColor: theme.background_color }}>
