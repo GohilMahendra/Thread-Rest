@@ -123,6 +123,7 @@ Make sure you have Node.js and npm installed on your machine. If not, you can do
 - Redux-Toolkit
 - React-navigation v6
 - reanimated v2
+- Socket.io client
 
 ### backend
 - MongoDB
@@ -131,6 +132,7 @@ Make sure you have Node.js and npm installed on your machine. If not, you can do
 - Aws s3
 - JWT statless
 - Typescript
+- Socket.io
 
 ## Features
 
@@ -138,24 +140,41 @@ Make sure you have Node.js and npm installed on your machine. If not, you can do
 - Otp Email verification
 
 ### Posts
-- Create Post
-- Delete Post
-- Like A Post
-- Comment on Post
-- Repost The Other Posts
+- create a post (post can be simple text , photo or a video same as twitter)
+- delete Post (only owner action)
+- like a post
+- comment on post
+- repost the other posts (same as twitter retweet without or with qoute)
+
+### Favorites
+- section dadicated to user activities
+- user can see all posts which liked by him
+- user can see all posts on which he commented along with the comment
+- user can get all list of followings, he can unfollow if want to directly from list
+
+### Pagination
+- all lists in app have pagination applied.
+- cursor pagination is implemented as mongodb is nosql database
+- cursor pagination runs fine in times of previous posts deletion before loading or new additions (removes case of duplicate posts)
+- post id as offset is used along with created time for sort posts
 
 ### Followers
-
-- Follow user
-- UnFollow user
+- follow user
+- unfollow user
 - get following posts
 - get list of follwings
+- get into the user profile by pressing on user
 
 ### Replies
-
-- comment on post
+- comment on post, inspired by instragram comment section (diffrent from traditional)
 - get posts in which you replies
-- delete the reply
+- for the replied posts you can again do like,repost and comment
+
+### Messaging 
+- send message to user in real time
+- message can be text or media (audio/video)
+- real time unread-counts, new convesations added
+- can check typing status and message of sender before it actually sends it
 
 ## Screenshots
 
