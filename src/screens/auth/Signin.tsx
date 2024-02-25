@@ -13,7 +13,7 @@ import io from "socket.io-client";
 import { updateUnreadCount } from '../../redux/slices/ConversationSlice';
 import { SocketContext } from '../../globals/SocketProvider';
 import { fetchUnreadCount } from '../../redux/actions/ConversationActions';
-import { BASE_URL } from '../../globals/constants';
+import { BASE_URL, SocketSubscribeEvent } from '../../globals/constants';
 const { height, width } = Dimensions.get("window")
 const SignIn = () => {
     const [email, setEmail] = useState("")
@@ -37,12 +37,12 @@ const SignIn = () => {
                 }
             });
 
-            socket.on('connect', () => {
+            socket.on(SocketSubscribeEvent.CONNECT, () => {
                 console.log('Connected to Socket.IO server');
                 setSocket(socket)
             })
             if (socket) {
-                socket.on("newMessageNotification", ({ senderId,channel }) => {
+                socket.on(SocketSubscribeEvent.NEW_MESSAGE_NOTIFICATION, ({ senderId,channel }) => {
                 
                     dispatch(updateUnreadCount({
                         senderId: senderId,

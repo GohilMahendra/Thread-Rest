@@ -12,6 +12,7 @@ import { createClient } from "redis";
 import http from "http";
 import { verifyToken } from './src/middlewares/jwtTokenAuth'
 import Channel from './src/models/Channel'
+import { TypingMessage } from './src/types/Message'
 dotenv.config()
 const app = express()
 const port = 3000
@@ -75,6 +76,23 @@ io.on('connection', async (socket) => {
   socket.on("leaveActiveConversation",()=>{
     if(userId)
     activeConversations.delete(userId)
+  })
+
+  socket.on("TypeEvent",(Typing:TypingMessage)=>{
+    if(userId && activeConversations.has(userId))
+    {
+      const currentActiveConversation = activeConversations.get(userId)
+      if(!currentActiveConversation)
+      return
+      const recieverId = currentActiveConversation.recieverId
+      const currentActiveReciever = usersMap.get(recieverId)
+      if(!currentActiveReciever)
+      return
+      socket.to(currentActiveReciever.socketId).emit("onTypeEvent", {
+        userId: userId,
+        typing: Typing
+    });
+    }
   })
 
   socket.on('connect', async () => {

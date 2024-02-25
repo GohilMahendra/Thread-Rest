@@ -89,13 +89,18 @@ const sendMessage = async (req: CustomRequest, res: Response) => {
         if (userId && usersMap.has(userId)) {
             const socketId = usersMap.get(userId)?.socketId
             if (socketId)
+            {
+                console.log("messsage should be sende to me my self")
                 io.to(socketId).emit("newMessage", messageTochannel)
+            }
+              
         }
         if (usersMap.has(receiverId)) {
             const socketId = usersMap.get(receiverId)?.socketId
 
             const isChattingWithMe = activeConversations.get(receiverId)?.recieverId === userId;
             if (socketId && isChattingWithMe) {
+                
                 io.to(socketId).emit("newMessage", messageTochannel)
             }
             else {

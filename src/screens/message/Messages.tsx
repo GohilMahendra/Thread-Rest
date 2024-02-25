@@ -24,11 +24,11 @@ import io, { Socket } from "socket.io-client";
 import { white, white_silver } from "../../globals/Colors";
 import { RootStackType } from "../../navigations/RootStack";
 import axios from "axios";
-import { BASE_URL } from "../../globals/constants";
+import { BASE_URL, SocketEmitEvent, SocketSubscribeEvent } from "../../globals/constants";
 import { Image } from "react-native-elements";
 import { launchImageLibrary } from "react-native-image-picker";
 import { UploadMedia } from "../../types/Post";
-import { Message } from "../../types/Messages";
+import { Message, TypingMessage } from "../../types/Messages";
 import { useSelector } from "react-redux";
 import { RootState, useAppDispatch } from "../../redux/store";
 import MessageItem from "../../components/messages/MessageItem";
@@ -41,6 +41,10 @@ const Messages = () => {
     const navigation = useNavigation<NavigationProp<RootStackType, "Messages">>()
     const route = useRoute<RouteProp<RootStackType, "Messages">>()
     const user = route.params.user
+    const [senderTyping,setSenderTyping] = useState<TypingMessage>({
+        isTyping: false,
+        textMessage: null
+    })
     const currentUserId = useSelector((state: RootState) => state.User.user._id)
     const routeChannel = route.params.channel || null
     const [lastOffset, setLastOffset] = useState<string | null>(null)
@@ -132,8 +136,8 @@ const Messages = () => {
     const onBackPress = async () => {
         if (socket)
         {
-            socket.emit("leaveActiveConversation")
-            socket?.off("newMessage")
+            socket.emit(SocketEmitEvent.LEAVE_ACTIVE_CONVERSATION)
+            socket?.off(SocketSubscribeEvent.NEW_MESSAGE)
         }
         navigation.goBack()
     }
@@ -197,12 +201,35 @@ const Messages = () => {
         }
     }
 
+    useEffect(()=>{
+        if(userMessage.length > 0 )
+        {
+            socket?.emit(SocketEmitEvent.TYPE_EVENT,{
+                isTyping: true,
+                textMessage: userMessage
+            })
+        }
+        else
+        {
+            socket?.emit(SocketEmitEvent.TYPE_EVENT,{
+                isTyping: false,
+                textMessage: null
+            })
+        }
+    },[userMessage])
+
     useEffect(() => {
         if (socket) {
-            socket.emit("userConversation", user._id)
-            socket.on("newMessage", (message:any) => {
+            socket.emit(SocketEmitEvent.USER_CONVERSATION, user._id)
+            socket.on(SocketSubscribeEvent.NEW_MESSAGE, (message:Message) => {
                 setMessages(prevMessage => [...prevMessage, message])
                 listRef.current?.scrollToEnd({ animated: true })
+            })
+            socket.on(SocketSubscribeEvent.ON_TYPE_EVENT,({typing}:{typing:TypingMessage})=>{
+                setSenderTyping({
+                    isTyping: typing.isTyping,
+                    textMessage: typing.textMessage
+                })
             })
         }
 
@@ -210,7 +237,8 @@ const Messages = () => {
         readAllMessages()
 
         return ()=>{
-            socket?.off("newMessage")
+            socket?.off(SocketSubscribeEvent.NEW_MESSAGE)
+            socket?.off(SocketSubscribeEvent.ON_TYPE_EVENT)
         }
     }, []);
     return (
@@ -238,8 +266,12 @@ const Messages = () => {
                             color: theme.text_color,
                         }}>{user.username}</Text>
                     </View>
-
                 </View>
+                {
+                    senderTyping.isTyping 
+                    &&
+                    <Text>{senderTyping.textMessage}</Text>
+                }
                 <View />
             </View>
             <FlatList

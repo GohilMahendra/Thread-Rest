@@ -5,7 +5,7 @@ import { Thread } from '../../types/Post'
 import PostItem from '../../components/feed/PostItem'
 import { useSelector } from 'react-redux'
 import { RootState, useAppDispatch } from '../../redux/store'
-import { FetchMorePostsAction,feedCreateRepostAction, FetchPostsAction, LikeAction, unLikeAction } from '../../redux/actions/FeedActions'
+import { FetchMorePostsAction, feedCreateRepostAction, FetchPostsAction, LikeAction, unLikeAction } from '../../redux/actions/FeedActions'
 import Replies from '../../components/feed/Replies'
 import { BottomSheetBackdrop, BottomSheetModal, BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { Text } from 'react-native-elements'
@@ -63,14 +63,16 @@ const Home = () => {
       userId: userId
     })
   }
-  const onLikeToggle = (postId: string, state: "like" | "unlike") => {
+
+
+  const onLikeToggle = useCallback(((postId: string, state: "like" | "unlike") => {
     if (state == "like") {
       dispatch(LikeAction({ postId: postId }))
     }
     else {
       dispatch(unLikeAction({ postId: postId }))
     }
-  }
+  }), [])
   const renderPosts = (item: Thread, index: number) => {
     return (
       item.isRepost && item.Repost ?

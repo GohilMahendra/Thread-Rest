@@ -14,6 +14,7 @@ import io from "socket.io-client";
 import { updateUnreadCount } from '../../redux/slices/ConversationSlice';
 import { fetchUnreadCount } from '../../redux/actions/ConversationActions';
 import { useSelector } from 'react-redux';
+import { SocketSubscribeEvent } from '../../globals/constants';
 const SplashScreen = () => {
     const dispatch = useAppDispatch()
     const navigation = useNavigation<compositeRootUserTab>()
@@ -37,13 +38,13 @@ const SplashScreen = () => {
                         }
                     });
 
-                    socket.on('connect', () => {
+                    socket.on(SocketSubscribeEvent.CONNECT, () => {
                         console.log('Connected to Socket.IO server');
                         setSocket(socket)
                     })
                     if (socket) {
-                        socket.on("newMessageNotification", ({ senderId,channel }) => {
-                        
+                        socket.on(SocketSubscribeEvent.NEW_MESSAGE_NOTIFICATION, ({ senderId,channel }) => {
+            
                             dispatch(updateUnreadCount({
                                 senderId: senderId,
                                 channel: channel

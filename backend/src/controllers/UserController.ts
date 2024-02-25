@@ -41,7 +41,6 @@ const signInUser = async (req: Request, res: Response) => {
                 message: "user not found"
             })
         }
-
         if (user.verified == false) {
             return res.status(401).json({
                 message: "user does not verified"
@@ -49,7 +48,6 @@ const signInUser = async (req: Request, res: Response) => {
         }
 
         const password_matched: boolean = await bcrypt.compare(password, user.password)
-
         if (!password_matched) {
             return res.status(404).json({
                 message: "invalid credentials"
@@ -61,7 +59,7 @@ const signInUser = async (req: Request, res: Response) => {
         const token = jwt.sign({
             userId: user._id,
         }, process.env.TOKEN_SECRET || "")
-
+    
         await User.findOneAndUpdate({ _id: user._id }, { token: token });
         user.token = token
         return res.status(200).json({ user })
@@ -267,7 +265,6 @@ const verifyEmail = async (req: CustomRequest, res: Response) => {
 
     }
     catch (err) {
-        console.log(JSON.stringify(err))
         res.status(500).json({
             message: "Email verification failed"
         })
@@ -493,7 +490,6 @@ const getLikedPosts = async (req: CustomRequest, res: Response) => {
         })
     }
     catch (err) {
-        console.log("errorr  ===>", JSON.stringify(err))
         res.status(500).json({
             message: "internal server Error"
         })
@@ -592,7 +588,6 @@ const getRepliedPosts = async (req: CustomRequest, res: Response) => {
         })
     }
     catch (err) {
-        console.log("errorr  ===>", JSON.stringify(err))
         res.status(500).json({
             message: "internal server Error"
         })

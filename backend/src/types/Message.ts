@@ -18,3 +18,9 @@ export interface MessageDocument extends Document {
     createdAt: Date;
     updatedAt: Date;
 }
+
+export interface TypingMessage
+{
+    isTyping: boolean,
+    textMessage: string | null
+}

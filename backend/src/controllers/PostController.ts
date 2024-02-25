@@ -90,11 +90,11 @@ const getPosts = async (req: CustomRequest, res: Response) => {
         const post_type = req.query.post_type as string
         const pageSize = parseInt(pageSizeParam, 10) || 10;
         const searchTerm = req.query.searchTerm as string
-
+    
         if (lastOffset) {
             quary._id = { $lt: new mongoose.Types.ObjectId(lastOffset) }
         }
-
+    
         if (post_type == "following") {
             const followings = await Follower.find({ follower: userId })
             const followingIds = followings.map((following) => following.following?._id)
