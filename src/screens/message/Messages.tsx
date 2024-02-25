@@ -7,7 +7,7 @@ import {
     TextInput,
     View,
     FlatList,
-    ActivityIndicator
+    ActivityIndicator,
 } from "react-native";
 import FontAwesome from "react-native-vector-icons/FontAwesome";
 import Fontisto from "react-native-vector-icons/Fontisto";
@@ -20,11 +20,14 @@ import {
     useRoute
 } from "@react-navigation/native";
 import { TouchableOpacity } from "react-native";
-import io, { Socket } from "socket.io-client";
 import { white, white_silver } from "../../globals/Colors";
 import { RootStackType } from "../../navigations/RootStack";
 import axios from "axios";
-import { BASE_URL, SocketEmitEvent, SocketSubscribeEvent } from "../../globals/constants";
+import {
+    BASE_URL,
+    SocketEmitEvent,
+    SocketSubscribeEvent
+} from "../../globals/constants";
 import { Image } from "react-native-elements";
 import { launchImageLibrary } from "react-native-image-picker";
 import { UploadMedia } from "../../types/Post";
@@ -35,18 +38,18 @@ import MessageItem from "../../components/messages/MessageItem";
 import { fetchMessages } from "../../apis/MessageApi";
 import { SocketContext } from "../../globals/SocketProvider";
 import { readAll } from "../../redux/slices/ConversationSlice";
+import Animated, { useAnimatedStyle, useSharedValue, withRepeat, withTiming, Easing } from "react-native-reanimated";
 const { width } = Dimensions.get("screen")
 const Messages = () => {
     const { theme } = UseTheme()
     const navigation = useNavigation<NavigationProp<RootStackType, "Messages">>()
     const route = useRoute<RouteProp<RootStackType, "Messages">>()
     const user = route.params.user
-    const [senderTyping,setSenderTyping] = useState<TypingMessage>({
+    const [senderTyping, setSenderTyping] = useState<TypingMessage>({
         isTyping: false,
         textMessage: null
     })
     const currentUserId = useSelector((state: RootState) => state.User.user._id)
-    const routeChannel = route.params.channel || null
     const [lastOffset, setLastOffset] = useState<string | null>(null)
     const [media, setMedia] = useState<UploadMedia[]>([])
     const [messages, setMessages] = useState<Message[]>([])
@@ -54,8 +57,8 @@ const Messages = () => {
     const [loadMoreLoading, setLoadMoreLoading] = useState<boolean>(false)
     const [sendMessageLoading, setSendMessageLoading] = useState<boolean>(false)
     const [userMessage, setUserMessage] = useState("")
+    const [showTypingMessage, setShowTypingMessage] = useState<boolean>(false)
     const { socket } = useContext(SocketContext)
-    const [channel, setChannel] = useState<string | null>(routeChannel)
     const listRef = useRef<FlatList | null>(null)
     const dispatch = useAppDispatch()
     const renderMessage = (message: Message, index: number) => {
@@ -134,8 +137,7 @@ const Messages = () => {
     }
 
     const onBackPress = async () => {
-        if (socket)
-        {
+        if (socket) {
             socket.emit(SocketEmitEvent.LEAVE_ACTIVE_CONVERSATION)
             socket?.off(SocketSubscribeEvent.NEW_MESSAGE)
         }
@@ -201,31 +203,29 @@ const Messages = () => {
         }
     }
 
-    useEffect(()=>{
-        if(userMessage.length > 0 )
-        {
-            socket?.emit(SocketEmitEvent.TYPE_EVENT,{
+    useEffect(() => {
+        if (userMessage.length > 0) {
+            socket?.emit(SocketEmitEvent.TYPE_EVENT, {
                 isTyping: true,
                 textMessage: userMessage
             })
         }
-        else
-        {
-            socket?.emit(SocketEmitEvent.TYPE_EVENT,{
+        else {
+            socket?.emit(SocketEmitEvent.TYPE_EVENT, {
                 isTyping: false,
                 textMessage: null
             })
         }
-    },[userMessage])
+    }, [userMessage])
 
     useEffect(() => {
         if (socket) {
             socket.emit(SocketEmitEvent.USER_CONVERSATION, user._id)
-            socket.on(SocketSubscribeEvent.NEW_MESSAGE, (message:Message) => {
+            socket.on(SocketSubscribeEvent.NEW_MESSAGE, (message: Message) => {
                 setMessages(prevMessage => [...prevMessage, message])
                 listRef.current?.scrollToEnd({ animated: true })
             })
-            socket.on(SocketSubscribeEvent.ON_TYPE_EVENT,({typing}:{typing:TypingMessage})=>{
+            socket.on(SocketSubscribeEvent.ON_TYPE_EVENT, ({ typing }: { typing: TypingMessage }) => {
                 setSenderTyping({
                     isTyping: typing.isTyping,
                     textMessage: typing.textMessage
@@ -236,7 +236,7 @@ const Messages = () => {
         getMessages()
         readAllMessages()
 
-        return ()=>{
+        return () => {
             socket?.off(SocketSubscribeEvent.NEW_MESSAGE)
             socket?.off(SocketSubscribeEvent.ON_TYPE_EVENT)
         }
@@ -261,19 +261,27 @@ const Messages = () => {
                             color: theme.text_color,
                             fontWeight: "bold"
                         }}>{user.fullname}</Text>
-                        <Text style={{
-                            fontSize: 12,
-                            color: theme.text_color,
-                        }}>{user.username}</Text>
+                        {
+                            !senderTyping.isTyping ?
+                                <Text style={{
+                                    fontSize: 12,
+                                    color: theme.text_color,
+                                }}>{user.username}</Text> :
+                                    <TouchableOpacity onPress={()=>setShowTypingMessage(showTypingMessage=>!showTypingMessage)}>
+                                    <Text style={{ color: theme.text_color }}>Typing ...</Text>
+                                    </TouchableOpacity>
+                        }
                     </View>
                 </View>
-                {
-                    senderTyping.isTyping 
-                    &&
-                    <Text>{senderTyping.textMessage}</Text>
-                }
                 <View />
             </View>
+            {
+                (senderTyping.isTyping && showTypingMessage)
+                &&
+                <View style={[styles.typingMessage,{ borderColor: theme.text_color}]}>
+                    <Text style={{ color: theme.text_color }}>{senderTyping.textMessage}</Text>
+                </View>
+            }
             <FlatList
                 ListHeaderComponent={loadMoreLoading ?
                     <ActivityIndicator
@@ -301,6 +309,7 @@ const Messages = () => {
             />
             <View style={[styles.sendMessageContainer, {
                 backgroundColor: theme.secondary_background_color,
+                borderWidth: 0.2
             }]}>
                 <View style={{
                     flexDirection: "row"
@@ -466,5 +475,14 @@ const styles = StyleSheet.create({
         justifyContent: "flex-start",
         padding: 5
     },
+    typingMessage:
+    { 
+        borderWidth:0.2,
+        borderRadius:scaledFont(10),
+        margin: scaledFont(10),
+        padding:scaledFont(20),
+        maxWidth: "90%", alignSelf: "center"
+    }
+
 
 })
