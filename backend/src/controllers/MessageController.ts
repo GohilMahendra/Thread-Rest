@@ -9,6 +9,7 @@ import { generateThumbnail } from "../utilities/Thumbnail";
 import Channel from "../models/Channel";
 import { UserDocument } from "../types/User";
 import { MessageDocument } from "../types/Message";
+import { SocketEmitEvent } from "../utilities/Constants";
 const sendMessage = async (req: CustomRequest, res: Response) => {
     try {
         const userId = req.userId
@@ -90,8 +91,7 @@ const sendMessage = async (req: CustomRequest, res: Response) => {
             const socketId = usersMap.get(userId)?.socketId
             if (socketId)
             {
-                console.log("messsage should be sende to me my self")
-                io.to(socketId).emit("newMessage", messageTochannel)
+                io.to(socketId).emit(SocketEmitEvent.NEW_MESSAGE, messageTochannel)
             }
               
         }
@@ -101,7 +101,7 @@ const sendMessage = async (req: CustomRequest, res: Response) => {
             const isChattingWithMe = activeConversations.get(receiverId)?.recieverId === userId;
             if (socketId && isChattingWithMe) {
                 
-                io.to(socketId).emit("newMessage", messageTochannel)
+                io.to(socketId).emit(SocketEmitEvent.NEW_MESSAGE, messageTochannel)
             }
             else {
                 const index = channel.members.findIndex(element => element.user.equals(new mongoose.Types.ObjectId(receiverId)));
@@ -132,11 +132,11 @@ const sendMessage = async (req: CustomRequest, res: Response) => {
                                 if (member.user.profile_picture)
                                     member.user.profile_picture = await getSignedUrl(member.user.profile_picture)
                             }
-                            io.to(socketId).emit("newMessageNotification", { senderId: userId, channel: channelNotification })
+                            io.to(socketId).emit(SocketEmitEvent.NEW_MESSAGE_NOTIFICATION, { senderId: userId, channel: channelNotification })
                         }
                     }
                     else {
-                        io.to(socketId).emit("newMessageNotification", { senderId: userId })
+                        io.to(socketId).emit(SocketEmitEvent.NEW_MESSAGE_NOTIFICATION, { senderId: userId })
                     }
                 }
             }

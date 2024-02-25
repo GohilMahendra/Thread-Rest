@@ -13,6 +13,7 @@ import http from "http";
 import { verifyToken } from './src/middlewares/jwtTokenAuth'
 import Channel from './src/models/Channel'
 import { TypingMessage } from './src/types/Message'
+import { SocketEmitEvent, SocketSubscribeEvent } from './src/utilities/Constants'
 dotenv.config()
 const app = express()
 const port = 3000
@@ -62,7 +63,7 @@ io.on('connection', async (socket) => {
     })
   }
 
-  socket.on("userConversation",(recieverId:string)=>{
+  socket.on(SocketSubscribeEvent.USER_CONVERSATION,(recieverId:string)=>{
     if(userId)
     {
       activeConversations.set(userId,{
@@ -73,12 +74,12 @@ io.on('connection', async (socket) => {
    
   })
 
-  socket.on("leaveActiveConversation",()=>{
+  socket.on(SocketSubscribeEvent.LEAVE_ACTIVE_CONVERSATION,()=>{
     if(userId)
     activeConversations.delete(userId)
   })
 
-  socket.on("TypeEvent",(Typing:TypingMessage)=>{
+  socket.on(SocketSubscribeEvent.TYPE_EVENT,(Typing:TypingMessage)=>{
     if(userId && activeConversations.has(userId))
     {
       const currentActiveConversation = activeConversations.get(userId)
@@ -88,7 +89,7 @@ io.on('connection', async (socket) => {
       const currentActiveReciever = usersMap.get(recieverId)
       if(!currentActiveReciever)
       return
-      socket.to(currentActiveReciever.socketId).emit("onTypeEvent", {
+      socket.to(currentActiveReciever.socketId).emit(SocketEmitEvent.ON_TYPE_EVENT, {
         userId: userId,
         typing: Typing
     });
