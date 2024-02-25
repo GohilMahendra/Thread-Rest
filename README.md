@@ -138,6 +138,8 @@ Make sure you have Node.js and npm installed on your machine. If not, you can do
 
 ### Auth
 - Otp Email verification
+- JWT token used for statless authentication
+- Password is hashed using bcypt
 
 ### Posts
 - create a post (post can be simple text , photo or a video same as twitter)
