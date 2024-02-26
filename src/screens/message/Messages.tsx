@@ -38,6 +38,18 @@ import MessageItem from "../../components/messages/MessageItem";
 import { fetchMessages } from "../../apis/MessageApi";
 import { SocketContext } from "../../globals/SocketProvider";
 import { readAll } from "../../redux/slices/ConversationSlice";
+import Ionicons from "react-native-vector-icons/Ionicons";
+import {
+    RTCPeerConnection,
+    RTCIceCandidate,
+    RTCSessionDescription,
+    RTCView,
+    MediaStream,
+    MediaStreamTrack,
+    mediaDevices,
+    registerGlobals,
+  } from 'react-native-webrtc';
+import Feather from "react-native-vector-icons/Feather";
 import Animated, { useAnimatedStyle, useSharedValue, withRepeat, withTiming, Easing } from "react-native-reanimated";
 const { width } = Dimensions.get("screen")
 const Messages = () => {
@@ -49,7 +61,7 @@ const Messages = () => {
         isTyping: false,
         textMessage: null
     })
-    const currentUserId = useSelector((state: RootState) => state.User.user._id)
+    const currentUser = useSelector((state: RootState) => state.User.user)
     const [lastOffset, setLastOffset] = useState<string | null>(null)
     const [media, setMedia] = useState<UploadMedia[]>([])
     const [messages, setMessages] = useState<Message[]>([])
@@ -203,6 +215,15 @@ const Messages = () => {
         }
     }
 
+    const startVideoCall = () =>
+    {
+        socket?.emit("send-call",{
+             userId: user._id,
+             senderName: currentUser.fullname,
+             senderImage: currentUser.profile_picture
+        })
+    }
+
     useEffect(() => {
         if (userMessage.length > 0) {
             socket?.emit(SocketEmitEvent.TYPE_EVENT, {
@@ -232,7 +253,6 @@ const Messages = () => {
                 })
             })
         }
-
         getMessages()
         readAllMessages()
 
@@ -255,6 +275,12 @@ const Messages = () => {
                         source={{ uri: user.profile_picture }}
                         style={styles.imgProfileUser}
                     />
+                    <View style={{
+                        flexDirection:"row",
+                        justifyContent:"space-between",
+                        alignItems:"center",
+                        width:"80%",
+                    }}>
                     <View>
                         <Text style={{
                             fontSize: 15,
@@ -267,18 +293,37 @@ const Messages = () => {
                                     fontSize: 12,
                                     color: theme.text_color,
                                 }}>{user.username}</Text> :
-                                    <TouchableOpacity onPress={()=>setShowTypingMessage(showTypingMessage=>!showTypingMessage)}>
+                                <TouchableOpacity onPress={() => setShowTypingMessage(showTypingMessage => !showTypingMessage)}>
                                     <Text style={{ color: theme.text_color }}>Typing ...</Text>
-                                    </TouchableOpacity>
+                                </TouchableOpacity>
                         }
                     </View>
+                    <View style={{
+                        flexDirection: 'row',
+                        width:"25%",
+                        alignItems:"center",
+                        justifyContent:"space-between"
+                    }}>
+                        <Ionicons
+                            onPress={()=>console.log("call")}
+                            name='call-outline'
+                            size={scaledFont(25)}
+                            color={theme.text_color}
+                        />
+                        <Ionicons
+                          onPress={()=>startVideoCall()}
+                            name='videocam-outline'
+                            size={scaledFont(30)}
+                            color={theme.text_color}
+                        />
+                    </View>
+                    </View>
                 </View>
-                <View />
             </View>
             {
                 (senderTyping.isTyping && showTypingMessage)
                 &&
-                <View style={[styles.typingMessage,{ borderColor: theme.text_color}]}>
+                <View style={[styles.typingMessage, { borderColor: theme.text_color }]}>
                     <Text style={{ color: theme.text_color }}>{senderTyping.textMessage}</Text>
                 </View>
             }
@@ -476,11 +521,11 @@ const styles = StyleSheet.create({
         padding: 5
     },
     typingMessage:
-    { 
-        borderWidth:0.2,
-        borderRadius:scaledFont(10),
+    {
+        borderWidth: 0.2,
+        borderRadius: scaledFont(10),
         margin: scaledFont(10),
-        padding:scaledFont(20),
+        padding: scaledFont(20),
         maxWidth: "90%", alignSelf: "center"
     }
 

@@ -5,13 +5,15 @@ import { NavigationContainer } from '@react-navigation/native'
 import UserTab from './UserTab'
 import CreatePost from '../screens/home/CreatePost'
 import SplashScreen from '../screens/auth/SplashScreen'
-import { Platform, StatusBar, View } from 'react-native'
+import { Modal, Platform, StatusBar, View } from 'react-native'
 import UseTheme from '../globals/UseTheme'
 import QoutePost from '../screens/profile/QoutePost'
 import { Thread } from '../types/Post'
 import Message from '../screens/message/Messages'
 import { User } from '../types/User'
 import Conversations from '../screens/message/Conversations'
+import { useSelector } from 'react-redux'
+import { RootState } from '../redux/store'
 
 export type RootStackType =
     {

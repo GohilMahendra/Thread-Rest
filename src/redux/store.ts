@@ -8,6 +8,7 @@ import ReplyReducer from "./slices/ReplySlice";
 import FavoriteReducer from "./slices/FavoritesSlice";
 import PostSearchReducer from "./slices/PostSearchSlice";
 import ConversationsReducer from "./slices/ConversationSlice";
+import CallReducer from "./slices/CallSlice";
 // const persistConfig = {
 //     key: "root",
 //     storage: AsyncStorage,
@@ -20,7 +21,8 @@ const RootReducer = combineReducers({
     Reply: ReplyReducer,
     Favorite: FavoriteReducer,
     PostSearch: PostSearchReducer,
-    Conversations: ConversationsReducer
+    Conversations: ConversationsReducer,
+    Call: CallReducer
 })
 const store = configureStore({
     reducer: RootReducer,

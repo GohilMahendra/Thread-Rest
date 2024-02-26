@@ -15,6 +15,7 @@ import { updateUnreadCount } from '../../redux/slices/ConversationSlice';
 import { fetchUnreadCount } from '../../redux/actions/ConversationActions';
 import { useSelector } from 'react-redux';
 import { SocketSubscribeEvent } from '../../globals/constants';
+import { onCallEnd, onOffer } from '../../redux/slices/CallSlice';
 const SplashScreen = () => {
     const dispatch = useAppDispatch()
     const navigation = useNavigation<compositeRootUserTab>()
@@ -50,6 +51,17 @@ const SplashScreen = () => {
                                 channel: channel
                             }))
                         })
+                        socket.on("call-offer",({  senderId,senderName,senderImage})=>{
+                            dispatch(onOffer({
+                                senderId: senderId,
+                                senderName: senderName,
+                                senderImage:senderImage
+                            }))
+                        })
+                        socket.on("call-ended",()=>{
+                          dispatch(onCallEnd())
+                        })
+
                     }
                     dispatch(fetchUnreadCount(""))
                     navigation.reset({

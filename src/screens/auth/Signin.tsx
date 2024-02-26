@@ -14,6 +14,7 @@ import { updateUnreadCount } from '../../redux/slices/ConversationSlice';
 import { SocketContext } from '../../globals/SocketProvider';
 import { fetchUnreadCount } from '../../redux/actions/ConversationActions';
 import { BASE_URL, SocketSubscribeEvent } from '../../globals/constants';
+import { useSharedValue } from 'react-native-reanimated';
 const { height, width } = Dimensions.get("window")
 const SignIn = () => {
     const [email, setEmail] = useState("")

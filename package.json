@@ -34,6 +34,7 @@
     "react-native-screens": "^3.27.0",
     "react-native-vector-icons": "^10.0.2",
     "react-native-video": "^5.2.1",
+    "react-native-webrtc": "^118.0.1",
     "react-redux": "^9.0.3",
     "redis": "^4.6.13",
     "redux-mock-store": "^1.5.4",

@@ -12,9 +12,15 @@ import { NavigationProp, useNavigation } from "@react-navigation/native";
 import { RootStackType } from "./RootStack";
 import FavoriteStack from "./FavoriteStack";
 import { useSelector } from "react-redux";
-import { RootState } from "../redux/store";
-import { View } from "react-native";
+import { RootState, useAppDispatch } from "../redux/store";
+import { Image, Modal, SafeAreaView, Text, TouchableOpacity, View } from "react-native";
 import { Badge } from "react-native-elements";
+import { scaledFont } from "../globals/utilities";
+import { white } from "../globals/Colors";
+import { placeholder_image } from "../globals/asstes";
+import { useContext } from "react";
+import { SocketContext } from "../globals/SocketProvider";
+import { onCallEnd } from "../redux/slices/CallSlice";
 export type UserTabType =
     {
         HomeStack: undefined,
@@ -26,11 +32,85 @@ export type UserTabType =
 const UserTab = () => {
     const UserTabNavigator = createBottomTabNavigator<UserTabType>()
     const navigation = useNavigation<NavigationProp<RootStackType, "UserTab">>()
+    const {socket} = useContext(SocketContext)
     const { theme } = UseTheme()
     const unreadCount = useSelector((state: RootState) => state.Conversations.unread_messages)
+    const call = useSelector((state:RootState)=>state.Call)
+    console.log(call.isModalVisible)
+    const dispatch = useAppDispatch()
+    const endCall = () =>
+    {
+        socket?.emit("hang-up")
+        dispatch(onCallEnd())
+    }
     return (
-
-        <UserTabNavigator.Navigator
+        <>
+        {
+            call.isModalVisible
+            &&
+            <Modal
+            visible={call.isModalVisible}
+            style={{
+                flex:1
+            }}
+            >
+                <SafeAreaView style={{flex:1}}>
+                <View style={{
+                    flex:1,
+                    backgroundColor: theme.background_color,
+                    alignItems:"center",
+                    justifyContent:"space-between"
+                }}>
+                    <Text style={{
+                        fontWeight:"bold",
+                        fontSize: scaledFont(18),
+                        color: theme.text_color,
+                    }}>{call.senderName}</Text>
+                    <Image
+                    source={{uri: call.senderImage}}
+                    style={{
+                        height:scaledFont(100),
+                        width: scaledFont(100),
+                        borderRadius: scaledFont(50)
+                    }}
+                    />
+                    <View style={{
+                        flexDirection:'row',
+                        width:"80%",
+                       
+                        justifyContent:"space-between"
+                    }}>
+                        <TouchableOpacity 
+                        onPress={()=>endCall()}
+                        style={{
+                            padding:scaledFont(20),
+                            backgroundColor:"red",
+                            borderRadius: scaledFont(30)
+                        }}>
+                        <AntDesign
+                        name="close"
+                        color={white}
+                        size={scaledFont(20)}
+                        />
+                        </TouchableOpacity>
+                        <TouchableOpacity style={{
+                            padding:scaledFont(20),
+                            backgroundColor:"green",
+                            borderRadius: scaledFont(30)
+                        }}>
+                        <AntDesign
+                        name="check"
+                        color={white}
+                        size={scaledFont(20)}
+                        />
+                        </TouchableOpacity>
+                       
+                    </View>
+                </View>
+                </SafeAreaView>
+            </Modal>
+        }
+         <UserTabNavigator.Navigator
             initialRouteName={"HomeStack"}
             screenOptions={{
                 headerShown: false,
@@ -135,6 +215,8 @@ const UserTab = () => {
             />
         </UserTabNavigator.Navigator>
 
+        </>
+       
     )
 }
 export default UserTab

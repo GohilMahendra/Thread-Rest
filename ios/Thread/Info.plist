@@ -37,6 +37,10 @@
 	</dict>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>We need access to your photo library to send them to tweet</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Need the camera permission for call</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Need microphone permisssion for call</string>
 	<key>UIAppFonts</key>
 	<array>
 	<string>AntDesign.ttf</string>
