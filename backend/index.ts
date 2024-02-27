@@ -137,6 +137,19 @@ io.on('connection', async (socket) => {
 
   })
 
+  socket.on("accept-call",()=>{
+    if(!userId || !usersMap.has(userId))
+    return
+
+    const callRoom = activeCalls.get(userId)
+    if(!callRoom)
+    return
+
+    const senderSocket = usersMap.get(callRoom.senderId)!.socketId
+
+    socket.to(senderSocket).emit("call-accepted")
+
+  })
   socket.on("hang-up",()=>{
     if(!userId || !usersMap.has(userId))
     return
@@ -159,6 +172,7 @@ io.on('connection', async (socket) => {
 
     console.log(activeCalls,"scene after call hangsup")
   })
+
 
   socket.on('connect', async () => {
     console.log("connected wuth socket", socket.id)

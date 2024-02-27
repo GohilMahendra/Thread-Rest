@@ -14,6 +14,7 @@ import { User } from '../types/User'
 import Conversations from '../screens/message/Conversations'
 import { useSelector } from 'react-redux'
 import { RootState } from '../redux/store'
+import CallRoom from '../screens/message/CallRoom'
 
 export type RootStackType =
     {
@@ -29,7 +30,8 @@ export type RootStackType =
             user: User,
             channel?: string
         },
-        Conversations: undefined
+        Conversations: undefined,
+        CallRoom: undefined
     }
 
 
@@ -68,6 +70,10 @@ const RootStack = () => {
                 <RootStackNavigator.Screen
                     name='Conversations'
                     component={Conversations}
+                />
+                <RootStackNavigator.Screen
+                    name='CallRoom'
+                    component={CallRoom}
                 />
                 <RootStackNavigator.Group screenOptions={{
                     presentation: 'modal',

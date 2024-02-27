@@ -39,6 +39,7 @@ import { fetchMessages } from "../../apis/MessageApi";
 import { SocketContext } from "../../globals/SocketProvider";
 import { readAll } from "../../redux/slices/ConversationSlice";
 import Ionicons from "react-native-vector-icons/Ionicons";
+import AntDesign from "react-native-vector-icons/AntDesign";
 import {
     RTCPeerConnection,
     RTCIceCandidate,
@@ -48,10 +49,11 @@ import {
     MediaStreamTrack,
     mediaDevices,
     registerGlobals,
-  } from 'react-native-webrtc';
+} from 'react-native-webrtc';
 import Feather from "react-native-vector-icons/Feather";
 import Animated, { useAnimatedStyle, useSharedValue, withRepeat, withTiming, Easing } from "react-native-reanimated";
-const { width } = Dimensions.get("screen")
+import { Modal } from "react-native-paper";
+const { height,width } = Dimensions.get("screen")
 const Messages = () => {
     const { theme } = UseTheme()
     const navigation = useNavigation<NavigationProp<RootStackType, "Messages">>()
@@ -72,6 +74,8 @@ const Messages = () => {
     const [showTypingMessage, setShowTypingMessage] = useState<boolean>(false)
     const { socket } = useContext(SocketContext)
     const listRef = useRef<FlatList | null>(null)
+    const call = useSelector((state: RootState) => state.Call)
+    const [showCallModal,setShowCallModal] = useState(false)
     const dispatch = useAppDispatch()
     const renderMessage = (message: Message, index: number) => {
         return (
@@ -215,13 +219,18 @@ const Messages = () => {
         }
     }
 
-    const startVideoCall = () =>
-    {
-        socket?.emit("send-call",{
-             userId: user._id,
-             senderName: currentUser.fullname,
-             senderImage: currentUser.profile_picture
+    const startVideoCall = () => {
+        setShowCallModal(true)
+        socket?.emit("send-call", {
+            userId: user._id,
+            senderName: currentUser.fullname,
+            senderImage: currentUser.profile_picture
         })
+    }
+    const endCall = () =>
+    {
+        setShowCallModal(false)
+        socket?.emit("hang-up")
     }
 
     useEffect(() => {
@@ -252,9 +261,16 @@ const Messages = () => {
                     textMessage: typing.textMessage
                 })
             })
+            socket.on("call-ended",()=>{
+                setShowCallModal(false)
+            })
+            socket.on("call-accepted",()=>{
+                setShowCallModal(false)
+                navigation.navigate("CallRoom")
+            })
         }
-        getMessages()
-        readAllMessages()
+        // getMessages()
+        // readAllMessages()
 
         return () => {
             socket?.off(SocketSubscribeEvent.NEW_MESSAGE)
@@ -276,47 +292,47 @@ const Messages = () => {
                         style={styles.imgProfileUser}
                     />
                     <View style={{
-                        flexDirection:"row",
-                        justifyContent:"space-between",
-                        alignItems:"center",
-                        width:"80%",
+                        flexDirection: "row",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        width: "80%",
                     }}>
-                    <View>
-                        <Text style={{
-                            fontSize: 15,
-                            color: theme.text_color,
-                            fontWeight: "bold"
-                        }}>{user.fullname}</Text>
-                        {
-                            !senderTyping.isTyping ?
-                                <Text style={{
-                                    fontSize: 12,
-                                    color: theme.text_color,
-                                }}>{user.username}</Text> :
-                                <TouchableOpacity onPress={() => setShowTypingMessage(showTypingMessage => !showTypingMessage)}>
-                                    <Text style={{ color: theme.text_color }}>Typing ...</Text>
-                                </TouchableOpacity>
-                        }
-                    </View>
-                    <View style={{
-                        flexDirection: 'row',
-                        width:"25%",
-                        alignItems:"center",
-                        justifyContent:"space-between"
-                    }}>
-                        <Ionicons
-                            onPress={()=>console.log("call")}
-                            name='call-outline'
-                            size={scaledFont(25)}
-                            color={theme.text_color}
-                        />
-                        <Ionicons
-                          onPress={()=>startVideoCall()}
-                            name='videocam-outline'
-                            size={scaledFont(30)}
-                            color={theme.text_color}
-                        />
-                    </View>
+                        <View>
+                            <Text style={{
+                                fontSize: 15,
+                                color: theme.text_color,
+                                fontWeight: "bold"
+                            }}>{user.fullname}</Text>
+                            {
+                                !senderTyping.isTyping ?
+                                    <Text style={{
+                                        fontSize: 12,
+                                        color: theme.text_color,
+                                    }}>{user.username}</Text> :
+                                    <TouchableOpacity onPress={() => setShowTypingMessage(showTypingMessage => !showTypingMessage)}>
+                                        <Text style={{ color: theme.text_color }}>Typing ...</Text>
+                                    </TouchableOpacity>
+                            }
+                        </View>
+                        <View style={{
+                            flexDirection: 'row',
+                            width: "25%",
+                            alignItems: "center",
+                            justifyContent: "space-between"
+                        }}>
+                            <Ionicons
+                                onPress={() => console.log("call")}
+                                name='call-outline'
+                                size={scaledFont(25)}
+                                color={theme.text_color}
+                            />
+                            <Ionicons
+                                onPress={() => startVideoCall()}
+                                name='videocam-outline'
+                                size={scaledFont(30)}
+                                color={theme.text_color}
+                            />
+                        </View>
                     </View>
                 </View>
             </View>
@@ -426,6 +442,45 @@ const Messages = () => {
                     </TouchableOpacity>
                 </View>
             </View>
+            <Modal
+                visible={showCallModal}
+            >
+                <View style={{
+                    height:height,
+                    width: width,
+                    padding:scaledFont(50),
+                    backgroundColor: theme.background_color,
+                    alignItems: "center",
+                    justifyContent: "space-between"
+                }}>
+                    <Text style={{
+                        fontWeight: "bold",
+                        fontSize: scaledFont(18),
+                        color: theme.text_color,
+                    }}>{user.fullname}</Text>
+                    <Image
+                        source={{ uri: user.profile_picture }}
+                        style={{
+                            height: scaledFont(100),
+                            width: scaledFont(100),
+                            borderRadius: scaledFont(50)
+                        }}
+                    />
+                    <TouchableOpacity
+                       onPress={()=>endCall()}
+                        style={{
+                            padding: scaledFont(20),
+                            backgroundColor: "red",
+                            borderRadius: scaledFont(30)
+                        }}>
+                        <AntDesign
+                            name="close"
+                            color={white}
+                            size={scaledFont(20)}
+                        />
+                    </TouchableOpacity>
+                </View>
+            </Modal>
         </SafeAreaView>
     )
 }

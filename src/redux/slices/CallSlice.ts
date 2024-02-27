@@ -53,8 +53,11 @@ const CallSlice = createSlice({
             state.senderName = action.payload.senderName,
             state.senderImage = action.payload.senderImage
         },
+        onCallAccept:(state)=>{
+            state.isModalVisible = false
+        }
     },
    
 })
-export const {  onCallEnd,onOffer } = CallSlice.actions
+export const {  onCallEnd,onOffer,onCallAccept } = CallSlice.actions
 export default CallSlice.reducer

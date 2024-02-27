@@ -20,7 +20,7 @@ import { white } from "../globals/Colors";
 import { placeholder_image } from "../globals/asstes";
 import { useContext } from "react";
 import { SocketContext } from "../globals/SocketProvider";
-import { onCallEnd } from "../redux/slices/CallSlice";
+import { onCallAccept, onCallEnd } from "../redux/slices/CallSlice";
 export type UserTabType =
     {
         HomeStack: undefined,
@@ -43,6 +43,13 @@ const UserTab = () => {
         socket?.emit("hang-up")
         dispatch(onCallEnd())
     }
+    const AcceptCall = () =>
+    {
+        socket?.emit("accept-call")
+        dispatch(onCallAccept())
+        navigation.navigate("CallRoom")
+    }
+
     return (
         <>
         {
@@ -99,6 +106,7 @@ const UserTab = () => {
                             borderRadius: scaledFont(30)
                         }}>
                         <AntDesign
+                        onPress={()=>AcceptCall()}
                         name="check"
                         color={white}
                         size={scaledFont(20)}
