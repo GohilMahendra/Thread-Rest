@@ -16,7 +16,7 @@ const App = () => {
     <Provider store={store}>
       <ThemeProvider>
         <SocketProvider>
-          <RootStack />
+            <RootStack />
         </SocketProvider>
       </ThemeProvider>
     </Provider>

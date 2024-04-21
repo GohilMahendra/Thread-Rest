@@ -39,21 +39,6 @@ import { fetchMessages } from "../../apis/MessageApi";
 import { SocketContext } from "../../globals/SocketProvider";
 import { readAll } from "../../redux/slices/ConversationSlice";
 import Ionicons from "react-native-vector-icons/Ionicons";
-import AntDesign from "react-native-vector-icons/AntDesign";
-import {
-    RTCPeerConnection,
-    RTCIceCandidate,
-    RTCSessionDescription,
-    RTCView,
-    MediaStream,
-    MediaStreamTrack,
-    mediaDevices,
-    registerGlobals,
-} from 'react-native-webrtc';
-import Feather from "react-native-vector-icons/Feather";
-import Animated, { useAnimatedStyle, useSharedValue, withRepeat, withTiming, Easing } from "react-native-reanimated";
-import { Modal } from "react-native-paper";
-const { height,width } = Dimensions.get("screen")
 const Messages = () => {
     const { theme } = UseTheme()
     const navigation = useNavigation<NavigationProp<RootStackType, "Messages">>()
@@ -63,7 +48,6 @@ const Messages = () => {
         isTyping: false,
         textMessage: null
     })
-    const currentUser = useSelector((state: RootState) => state.User.user)
     const [lastOffset, setLastOffset] = useState<string | null>(null)
     const [media, setMedia] = useState<UploadMedia[]>([])
     const [messages, setMessages] = useState<Message[]>([])
@@ -74,8 +58,6 @@ const Messages = () => {
     const [showTypingMessage, setShowTypingMessage] = useState<boolean>(false)
     const { socket } = useContext(SocketContext)
     const listRef = useRef<FlatList | null>(null)
-    const call = useSelector((state: RootState) => state.Call)
-    const [showCallModal,setShowCallModal] = useState(false)
     const dispatch = useAppDispatch()
     const renderMessage = (message: Message, index: number) => {
         return (
@@ -219,20 +201,6 @@ const Messages = () => {
         }
     }
 
-    const startVideoCall = () => {
-        setShowCallModal(true)
-        socket?.emit("send-call", {
-            userId: user._id,
-            senderName: currentUser.fullname,
-            senderImage: currentUser.profile_picture
-        })
-    }
-    const endCall = () =>
-    {
-        setShowCallModal(false)
-        socket?.emit("hang-up")
-    }
-
     useEffect(() => {
         if (userMessage.length > 0) {
             socket?.emit(SocketEmitEvent.TYPE_EVENT, {
@@ -261,16 +229,9 @@ const Messages = () => {
                     textMessage: typing.textMessage
                 })
             })
-            socket.on("call-ended",()=>{
-                setShowCallModal(false)
-            })
-            socket.on("call-accepted",()=>{
-                setShowCallModal(false)
-                navigation.navigate("CallRoom")
-            })
         }
-        // getMessages()
-        // readAllMessages()
+        getMessages()
+        readAllMessages()
 
         return () => {
             socket?.off(SocketSubscribeEvent.NEW_MESSAGE)
@@ -327,7 +288,7 @@ const Messages = () => {
                                 color={theme.text_color}
                             />
                             <Ionicons
-                                onPress={() => startVideoCall()}
+                                onPress={() => console.log("videocall")}
                                 name='videocam-outline'
                                 size={scaledFont(30)}
                                 color={theme.text_color}
@@ -442,45 +403,6 @@ const Messages = () => {
                     </TouchableOpacity>
                 </View>
             </View>
-            <Modal
-                visible={showCallModal}
-            >
-                <View style={{
-                    height:height,
-                    width: width,
-                    padding:scaledFont(50),
-                    backgroundColor: theme.background_color,
-                    alignItems: "center",
-                    justifyContent: "space-between"
-                }}>
-                    <Text style={{
-                        fontWeight: "bold",
-                        fontSize: scaledFont(18),
-                        color: theme.text_color,
-                    }}>{user.fullname}</Text>
-                    <Image
-                        source={{ uri: user.profile_picture }}
-                        style={{
-                            height: scaledFont(100),
-                            width: scaledFont(100),
-                            borderRadius: scaledFont(50)
-                        }}
-                    />
-                    <TouchableOpacity
-                       onPress={()=>endCall()}
-                        style={{
-                            padding: scaledFont(20),
-                            backgroundColor: "red",
-                            borderRadius: scaledFont(30)
-                        }}>
-                        <AntDesign
-                            name="close"
-                            color={white}
-                            size={scaledFont(20)}
-                        />
-                    </TouchableOpacity>
-                </View>
-            </Modal>
         </SafeAreaView>
     )
 }
@@ -546,10 +468,10 @@ const styles = StyleSheet.create({
     sendMessageInnerContainer:
     {
         flexDirection: "row",
-        borderWidth: 0.2,
-        padding: 10,
+        borderWidth: scaledFont(0.2),
+        padding: scaledFont(10),
         alignItems: "center",
-        borderRadius: 20,
+        borderRadius: scaledFont(10),
         justifyContent: "space-between",
     },
     btnOpenImagePicker:

@@ -8,15 +8,16 @@ type CallSliceType =
     senderName: string,
     callType: "audio" | "video" | "none",
     duration: number,
-    senderImage: string
-
+    senderImage: string,
+    offer:any
 }
 
 type OfferPayload = 
 {
     senderId: string,
     senderName: string,
-    senderImage: string
+    senderImage: string,
+    offer:any
 }
 
 type AcceptCallPayload = 
@@ -33,6 +34,7 @@ const initalState: CallSliceType =
     senderId:"",
     senderName:"",
     senderImage:"",
+    offer:null
 }
 
 const CallSlice = createSlice({
@@ -51,7 +53,8 @@ const CallSlice = createSlice({
             state.isModalVisible = true,
             state.senderId =  action.payload.senderId
             state.senderName = action.payload.senderName,
-            state.senderImage = action.payload.senderImage
+            state.senderImage = action.payload.senderImage,
+            state.offer = action.payload.offer
         },
         onCallAccept:(state)=>{
             state.isModalVisible = false

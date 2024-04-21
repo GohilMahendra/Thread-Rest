@@ -105,11 +105,10 @@ io.on('connection', async (socket) => {
   })
 
   socket.on("send-call",(obj)=>{
-
-    console.log(obj,"from sender")
     const receiverId = obj.userId
     const senderName = obj.senderName   
     const senderImage = obj.senderImage 
+    const offer = obj.offer 
 
     if(!userId || !usersMap.has(receiverId) || activeCalls.has(userId) || activeCalls.has(receiverId))
     return
@@ -132,12 +131,13 @@ io.on('connection', async (socket) => {
     socket.to(receiverSocket).emit("call-offer",{
       senderId: userId,
       senderName: senderName,
-      senderImage: senderImage
+      senderImage: senderImage,
+      offer: offer
     })
 
   })
 
-  socket.on("accept-call",()=>{
+  socket.on("accept-call",({answer})=>{
     if(!userId || !usersMap.has(userId))
     return
 
@@ -147,7 +147,9 @@ io.on('connection', async (socket) => {
 
     const senderSocket = usersMap.get(callRoom.senderId)!.socketId
 
-    socket.to(senderSocket).emit("call-accepted")
+    socket.to(senderSocket).emit("call-accepted",{
+      answer
+    })
 
   })
   socket.on("hang-up",()=>{
@@ -170,12 +172,24 @@ io.on('connection', async (socket) => {
     socket.to(userSocket).emit("call-ended")
     socket.to(receiverSocket).emit("call-ended")
 
-    console.log(activeCalls,"scene after call hangsup")
+  })
+
+  socket.on("ice-candidate",(IceCandidate)=>{
+    if(!userId || !usersMap.has(userId))
+    return
+
+    const callRoom = activeCalls.get(userId)
+    if(!callRoom)
+    return
+
+    const IceReciver = callRoom.senderId != userId ? callRoom.senderId : callRoom.receiverId
+    const IceReciverSocket = usersMap.get(IceReciver)!.socketId
+    socket.to(IceReciverSocket).emit("on-ice-candidate",IceCandidate)
   })
 
 
   socket.on('connect', async () => {
-    console.log("connected wuth socket", socket.id)
+    console.log("connected with socket", socket.id)
   });
 
 

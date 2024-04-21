@@ -7,7 +7,7 @@ type SocketContextType =
     setSocket: (socket:Socket | null) => void
   }
 
-type ThemeProps =
+type SocketProps =
   {
     children: ReactNode
   }
@@ -16,7 +16,7 @@ export const SocketContext = createContext<SocketContextType>({
   setSocket: (socket: Socket | null) => { }
 })
 
-export const SocketProvider: React.FC<ThemeProps> = ({ children }) => {
+export const SocketProvider: React.FC<SocketProps> = ({ children }) => {
   const [socket, setSocket] = useState<Socket | null>(null);
 
   return (

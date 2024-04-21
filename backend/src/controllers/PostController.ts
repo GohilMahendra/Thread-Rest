@@ -156,7 +156,6 @@ const getPosts = async (req: CustomRequest, res: Response) => {
             }
         }));
 
-
         res.status(200).json({
             data: userPosts,
             meta: {

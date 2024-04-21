@@ -11,10 +11,11 @@ export const loginUser = async (email: string, password: string) => {
             { email, password },
             { headers: { 'Content-Type': 'application/json' } }
         );
-
+        
         if (response.status == 200)
             return response.data
         else {
+            console.log(response)
             throw new Error(response.data)
         }
     }
@@ -24,7 +25,7 @@ export const loginUser = async (email: string, password: string) => {
         } else if (error.request) {
             throw new Error("No Response from Server");
         } else {
-            throw new Error("Error:" + error.message);
+            throw new Error("Error:" + error);
         }
     }
 

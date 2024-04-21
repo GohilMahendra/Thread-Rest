@@ -109,13 +109,18 @@ const styles = StyleSheet.create({
     // width: "95%",
     margin: 20,
     marginBottom: 10,
-    padding: 15,
+    paddingHorizontal: scaledFont(10),
+    paddingVertical:scaledFont(10),
+    flexWrap:'wrap',
+    overflow:"hidden",
+    alignItems:'center',
     flexDirection: 'row',
     borderRadius: 10
   },
   inputSearch:
   {
     fontSize: scaledFont(15),
+    width:"80%",
     marginLeft: scaledFont(20)
   },
   listContainer:

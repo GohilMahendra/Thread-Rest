@@ -12,8 +12,6 @@ import { Thread } from '../types/Post'
 import Message from '../screens/message/Messages'
 import { User } from '../types/User'
 import Conversations from '../screens/message/Conversations'
-import { useSelector } from 'react-redux'
-import { RootState } from '../redux/store'
 import CallRoom from '../screens/message/CallRoom'
 
 export type RootStackType =

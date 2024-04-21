@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import React, { useContext, useEffect } from 'react'
 import { SafeAreaView, StyleSheet } from "react-native";
-import { RootState, useAppDispatch } from '../../redux/store';
+import { useAppDispatch } from '../../redux/store';
 import { SignInAction } from '../../redux/actions/UserActions';
 import { compositeRootUserTab } from '../../navigations/Types';
 import UseTheme from '../../globals/UseTheme';
@@ -13,9 +13,7 @@ import { SocketContext } from '../../globals/SocketProvider';
 import io from "socket.io-client";
 import { updateUnreadCount } from '../../redux/slices/ConversationSlice';
 import { fetchUnreadCount } from '../../redux/actions/ConversationActions';
-import { useSelector } from 'react-redux';
-import { SocketSubscribeEvent } from '../../globals/constants';
-import { onCallEnd, onOffer } from '../../redux/slices/CallSlice';
+import { BASE_URL, SocketSubscribeEvent } from '../../globals/constants';
 const SplashScreen = () => {
     const dispatch = useAppDispatch()
     const navigation = useNavigation<compositeRootUserTab>()
@@ -33,7 +31,7 @@ const SplashScreen = () => {
                 const fullfilled = await dispatch(SignInAction({ email, password }))
                 if (SignInAction.fulfilled.match(fullfilled)) {
                     const token = await AsyncStorage.getItem("token")
-                    const socket = io('http://localhost:3000', {
+                    const socket = io(BASE_URL, {
                         auth: {
                             token: token
                         }
@@ -44,24 +42,13 @@ const SplashScreen = () => {
                         setSocket(socket)
                     })
                     if (socket) {
-                        socket.on(SocketSubscribeEvent.NEW_MESSAGE_NOTIFICATION, ({ senderId,channel }) => {
-            
+                        socket.on(SocketSubscribeEvent.NEW_MESSAGE_NOTIFICATION, ({ senderId, channel }) => {
+
                             dispatch(updateUnreadCount({
                                 senderId: senderId,
                                 channel: channel
                             }))
                         })
-                        socket.on("call-offer",({  senderId,senderName,senderImage})=>{
-                            dispatch(onOffer({
-                                senderId: senderId,
-                                senderName: senderName,
-                                senderImage:senderImage
-                            }))
-                        })
-                        socket.on("call-ended",()=>{
-                          dispatch(onCallEnd())
-                        })
-
                     }
                     dispatch(fetchUnreadCount(""))
                     navigation.reset({
